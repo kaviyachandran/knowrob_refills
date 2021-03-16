@@ -89,7 +89,11 @@
       create_article_number(r,r,r),
       create_article_number(r,r),
       article_number_of_dan(r,r),
-      product_dimensions(r,r)
+      product_dimensions(r,r),
+      retract_shelf(r),
+      assert_layer_id(r),
+      assert_facing_id(r),
+      get_number_of_items_in_facing(r, -)
       ]).
 
 :- use_module(library('semweb/rdf_db')).
@@ -187,19 +191,19 @@ atomize(T,A) :- term_to_atom(T,A).
 create_article_number(GTIN,DAN,AN) :-
   atomize(GTIN,GTIN_atom),
   atomize(DAN,DAN_atom),
-  tell(instance_of(AN, shop:'ArticleNumber')),
-  tell(holds(AN, shop:gtin, GTIN_atom)),
-  tell(holds(AN, shop:dan, DAN_atom)).
+  tell([instance_of(AN, shop:'ArticleNumber'),
+  holds(AN, shop:gtin, GTIN_atom),
+  holds(AN, shop:dan, DAN_atom)]).
 
 create_article_number(dan(DAN),AN) :-
   atomize(DAN,DAN_atom),
-  tell(instance_of(AN, shop:'ArticleNumber')),
-  tell(holds(AN, shop:dan, DAN_atom)).
+  tell([instance_of(AN, shop:'ArticleNumber'),
+  holds(AN, shop:dan, DAN_atom)]).
 
 create_article_number(gtin(GTIN),AN) :-
   atomize(GTIN,GTIN_atom),
-  tell(instance_of(AN, shop:'ArticleNumber')),
-  tell(holds(AN, shop:gtin, GTIN_atom)).
+  tell([instance_of(AN, shop:'ArticleNumber'),
+  holds(AN, shop:gtin, GTIN_atom)]).
 
 dan_gtin(DAN, GTIN):-
   triple(G, shop:gtin, GTIN), triple(G, shop:dan, DAN).
@@ -231,9 +235,9 @@ create_article_type(AN,ProductType) :-
     holds(AN,shop:dan,NUM) )),
   atomic_list_concat([
     'http://knowrob.org/kb/shop.owl#UnknownProduct_',NUM], ProductType),
-  
-  tell(subclass_of(ProductType, shop:'Product')),
-  tell([instance_of(A, owl:'Restriction'), subclass_of(ProductType, A),
+  tell([subclass_of(ProductType, shop:'Product'),
+        instance_of(A, owl:'Restriction'),
+        subclass_of(ProductType, A),
         is_restriction(A, value(shop:articleNumberOfProduct, AN))]).
   
 
@@ -1435,24 +1439,55 @@ assert_perception_feature__(Object) :-
   rdf_split_url(_, FeatureFrameName, FeatureIndividual), 
   tell(holds(FeatureIndividual, knowrob:frameName, FeatureFrameName)).
 
+assert_shelf_erp_id(Shelf) :-
+  shelf_with_erp_id(Shelf, Id),
+  tell(triple(Shelf, shop:erpShelfId, Id)).
+
+assert_shelves_parts_erp_id :-
+  forall(
+    has_type(Shelf, dmshop:'DMShelfFrame'),
+    (
+     assert_shelf_erp_id(Shelf),
+     assert_shelf_parts_erp_id(Shelf)
+    )).
+
+assert_shelf_parts_erp_id(Shelf) :-
+  \+ triple(Shelf, soma:hasPhysicalComponent, _),
+  print_message(info, 'Shelf has no layers').
+
+assert_shelf_parts_erp_id(Shelf) :-
+  assert_layer_id(Shelf).
+
 assert_layer_id(Shelf) :-
   findall([Z, Layer],
-        (triple(X, soma:hasPhysicalComponent, Layer),is_at(Layer, [_, [X1,Y,Z], _])),
+        (
+        triple(Shelf, soma:hasPhysicalComponent, Layer),
+        is_at(Layer, ['map', [X1,Y,Z], _]),
+        assert_facing_id(Layer)
+        ),
         Layers),
   sort(0, @>, Layers, SortedLayers),
   forall(
     (member([Z_val,L], SortedLayers)), 
-    (nth1(Id, SortedLayers, [Z_val,L]), 
-    tell(holds(L, shop:erpShelfLayerId, Id)))
+    (
+      nth1(Id, SortedLayers, [Z_val,L]),
+      tell(holds(L, shop:erpShelfLayerId, Id))
+    )
   ).
 
 assert_facing_id(Layer) :-
   findall([Y, F],
-          (triple(F, shop:layerOfFacing, Layer),is_at(F, [_, [X,Y,Z], _])),
+          (triple(F, shop:layerOfFacing, Layer),
+          is_at(F, ['map', [X,Y,Z], _])),
           Facings),
   sort(Facings, SortedFacings),
   forall(
     (member([Y, F], SortedFacings)),
-    (nth1(Id, SortedFacings, [Y, F]),
+    (
+    nth1(Id, SortedFacings, [Y, F]),
     tell(holds(F, shop:erpFacingId, Id)))
   ).
+
+get_number_of_items_in_facing(Facing, Quantity) :-
+  triple(F, shop:layerOfFacing, Layer),
+  aggregate_all(count, triple(F, 'http://knowrob.org/kb/shop.owl#productInFacing',_) , Quantity).
