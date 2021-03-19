@@ -1067,6 +1067,14 @@
     
 
 
+    <!-- http://knowrob.org/kb/shop.owl#MobilePhone -->
+
+    <owl:Class rdf:about="http://knowrob.org/kb/shop.owl#MobilePhone">
+        <rdfs:subClassOf rdf:resource="http://www.ease-crc.org/ont/SOMA.owl#Appliance"/>
+    </owl:Class>
+    
+
+
     <!-- http://knowrob.org/kb/shop.owl#MountableProduct -->
 
     <owl:Class rdf:about="http://knowrob.org/kb/shop.owl#MountableProduct">
@@ -1311,6 +1319,7 @@
         </owl:equivalentClass>
         <rdfs:subClassOf rdf:resource="http://knowrob.org/kb/shop.owl#PuttingProductSomewhere"/>
     </owl:Class>
+    
 
 
     <!-- http://knowrob.org/kb/shop.owl#PuttingProductInAJacket -->
@@ -1986,7 +1995,7 @@
     <!-- http://knowrob.org/kb/shop.owl#SmartFridge -->
 
     <owl:Class rdf:about="http://knowrob.org/kb/shop.owl#SmartFridge">
-        <rdfs:subClassOf rdf:resource="http://www.ontologydesignpatterns.org/ont/dul/DUL.owl#DesignedArtifact"/>
+        <rdfs:subClassOf rdf:resource="http://www.ease-crc.org/ont/SOMA.owl#Appliance"/>
     </owl:Class>
     
 
@@ -2100,6 +2109,12 @@
         </owl:equivalentClass>
         <rdfs:subClassOf rdf:resource="http://knowrob.org/kb/shop.owl#PlacedProduct"/>
     </owl:Class>
+    
+
+
+    <!-- http://www.ease-crc.org/ont/SOMA.owl#Appliance -->
+
+    <owl:Class rdf:about="http://www.ease-crc.org/ont/SOMA.owl#Appliance"/>
     
 
 
