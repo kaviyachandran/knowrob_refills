@@ -33,6 +33,7 @@
 
 :- use_module(library('shop')).
 :- use_module(library('refills')).
+:- use_directory('env_model').
 
 
 :- use_module(library('db/tripledb'), 
