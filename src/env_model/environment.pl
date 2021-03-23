@@ -1,6 +1,6 @@
 :- module(environment,
     [ 
-        create_box/7
+        create_box/5
 ]).
 
 :- use_module(library('semweb/rdf_db')).
@@ -20,26 +20,24 @@
 
 belief_marker_at(Marker, Id, Pose) :- %%% Left odd num and right even num ids
     tell(triple(Marker, dmshop:'markerId', Id)),
-    (Id/2 =:= 0 
+    (X is Id mod 2, X =:= 0 
     -> tell(has_type(Marker, dmshop:'DMShelfMarkerRight'))
     ; tell(has_type(Marker, dmshop:'DMShelfMarkerLeft'))),
     tell(is_at(Marker, Pose)),
-    assert_shelf(Marker, Pose).
+    assert_shelf(Marker, Id, Pose).
 
 belief_shelf_at(Shelf, Pose) :-
     tell(is_at(Shelf, Pose)),
     object_dimensions(Shelf, D, W, _),
-    (\+ triple(Shelf, dmshop:leftMarker, _) 
+    (\+ triple(Shelf, dmshop:leftMarker, _)
     ->  assert_left_shelf_marker(Shelf, Pose, D, W)),
     (\+ triple(Shelf, dmshop:rightMarker, _)
     ->  assert_right_shelf_marker(Shelf, Pose, D, W)).
 
 create_box(D, W, H, Color, Obj) :-
-    tell([
-        is_physical_object(Obj),
-        assert_object_color__(Obj, Color),
-        assert_object_shape__(Obj,D, W, H)
-    ]),
+    tell(is_physical_object(Obj)),
+    assert_object_color__(Obj, Color),
+    assert_object_shape__(Obj,D, W, H),
     triple(Shape,dul:hasRegion,ShapeRegion),
     triple(ColorType,dul:hasRegion,Region),
 
@@ -52,14 +50,14 @@ create_box(D, W, H, Color, Obj) :-
     ]).
     
 assert_object_color__(Obj, Color) :-
-    has_type(ColorType, soma:'Color'),
+    tell([has_type(ColorType, soma:'Color'),
     triple(Obj,soma:hasColor,ColorType),
-    object_color_rgb(Obj, Color).
+    object_color_rgb(Obj, Color)]).
 
 assert_object_shape__(Obj, D, W, H) :-
-    has_type(Shape, soma:'Shape'),
+    tell([has_type(Shape, soma:'Shape'),
     holds(Obj,soma:hasShape,Shape),
-    object_dimensions(Obj, D, W, H).
+    object_dimensions(Obj, D, W, H)]).
 
 
 assert_left_shelf_marker(Shelf, Pose, Depth, Width) :-
@@ -84,35 +82,36 @@ assert_right_shelf_marker(Shelf, Pose, Depth, Width) :-
         triple(Shelf, dmshop:rightMarker, LeftMarker),
         is_at(Marker, ['map', [Sx, Sy, Z], [0,0,0,1]])]).
 
-assert_shelf(Marker, Id [_, [X,Y,Z], [X1,,Y1,Z1,W1]]) :-
+assert_shelf(Marker, Id, [_, [X,Y,Z], [X1,Y1,Z1,W1]]) :-
     (has_type(Marker, dmshop:'DMShelfMarkerRight')
     ->  ShelfId is Id/2,
-    (triple(Shelf, shop:'ShelfId', ShelfId) 
+        writeln(ShelfId),
+    (triple(Shelf, shop:'ShelfId', ShelfId)
     ->  tell(triple(Shelf, dmshop:rightMarker, Marker)),
-        adjust_shelf_pose(Shelf) 
-    ;   S_D = 1, S_W = 0.4, S_H = 1,
+        adjust_shelf_pose(Shelf)
+    ;   S_W = 1, S_D = 0.4, S_H = 1,
         create_box(S_D, S_W, S_H, [0.5, 0.5, 0.5], Shelf), %%% dim when not known   
         tell([triple(Shelf, dmshop:rightMarker, Marker),
             triple(Shelf, shop:'ShelfId', ShelfId)]),
-        SX is X+(S_D/2), SZ is S_H/2,
-        is_at(Shelf, ['map', [SX, Y, SZ], [X1,,Y1,Z1,W1]]))
+        SX is X+(S_W/2), SZ is S_H/2,
+        tell(is_at(Shelf, ['map', [SX, Y, SZ], [X1,Y1,Z1,W1]])))
     ; ShelfId is (Id+1)/2,
-    (triple(Shelf, shop:'ShelfId', ShelfId) 
+    (triple(Shelf, shop:'ShelfId', ShelfId)
     ->  tell(triple(Shelf, dmshop:leftMarker, Marker)),
-        adjust_shelf_pose(Shelf) 
-    ;   create_box(S_D, S_W, S_H, [0.5, 0.5, 0.5]), %%% dim when not known
+        adjust_shelf_pose(Shelf)
+    ;   S_W = 1, S_D = 0.4, S_H = 1,
+        create_box(S_W, S_D, S_H, [0.5, 0.5, 0.5], Shelf), %%% dim when not known
         SX is X-(S_W/2), SZ is S_H/2, 
         tell([triple(Shelf, dmshop:leftMarker, Marker),
             triple(Shelf, shop:'ShelfId', ShelfId)]),
-        S_W = 1, S_D = 0.4, S_H = 1,
-        is_at(Shelf, ['map', [SX, Y, SZ], [X1,,Y1,Z1,W1]]))
+        tell(is_at(Shelf, ['map', [SX, Y, SZ], [X1,Y1,Z1,W1]])))
     ).
 
 adjust_shelf_pose(Shelf) :-
     triple(Shelf, dmshop:leftMarker, LeftMarker),
     triple(Shelf, dmshop:rightMarker, RightMarker),
 
-    is_at(LeftMarker, ['map', [LX, _, _], _]),
+    is_at(LeftMarker, ['map', [LX, LY, _], _]),
     is_at(RightMarker, ['map', [RX, _, _], _]),
 
     shop:retract_shape_of(Shelf),
@@ -120,8 +119,9 @@ adjust_shelf_pose(Shelf) :-
     assert_object_shape__(Shelf, 0.4 , SW, 1),
     SX is (LX - (SW /2)),
 
+    is_at(Shelf, ['map', [_, _, SZ], _]),
     retract_location_of(Shelf),
-    is_at(Shelf, ['map', [SX, Y, SZ], [X1,,Y1,Z1,W1]]).
+    tell(is_at(Shelf, ['map', [SX, LY, SZ], [0,0,0,1]])).
 
 
 retract_location_of(Object) :-
@@ -137,14 +137,14 @@ test('box create') :-
     gtrace,
     create_box(0.15,0.15,0.15, [1,1,0.2], Left), % Box b color 0.7,0.2,1 pose - x+(d_b - d_a)/2, y with width, z is h/2 
     Pose = ['map', [2.5, 1.2, 0.030], [0,0,0,1]],
-    belief_marker_at(Left, 1, Pose),
+    belief_marker_at(Left, 6, Pose),
     create_box(0.15,0.15,0.15, [1,1,0.2], Right),
-    Pose = ['map', [1.5, 1.2, 0.030], [0,0,0,1]],
-    belief_marker_at(Right, 2, Pose),
+    Pose1 = ['map', [1.5, 1.2, 0.030], [0,0,0,1]],
+    belief_marker_at(Right, 2, Pose1),
     writeln(Obj).
 
 test('object color') :-
-    gtrace,
+    % gtrace,
     tell(is_physical_object(O)),
     tell(has_type(ColorType, soma:'Color')), 
     tell(triple(O,soma:hasColor,ColorType)), 
