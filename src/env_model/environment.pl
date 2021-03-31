@@ -1,6 +1,9 @@
 :- module(environment,
     [ 
-        create_box/5
+        create_box/5,
+        belief_marker_at/3,
+        belief_shelf_at/2,
+        belief_shelf_at/4
 ]).
 
 :- use_module(library('semweb/rdf_db')).
@@ -15,7 +18,6 @@
     'http://knowrob.org/kb/dm-market.owl#', [keep(true)]).
 
 
-%%%%% TODO : update pose computation if the values are < 0
 %%%%% Belief marker at a pose then there is a shelf at ()
 
 belief_marker_at(Marker, Id, Pose) :- %%% Left odd num and right even num ids
@@ -33,6 +35,18 @@ belief_shelf_at(Shelf, Pose) :-
     ->  assert_left_shelf_marker(Shelf, Pose, D, W)),
     (\+ triple(Shelf, dmshop:rightMarker, _)
     ->  assert_right_shelf_marker(Shelf, Pose, D, W)).
+
+belief_shelf_at(Marker, D, W, H) :-
+    triple(Shelf, _, Marker),
+    is_at(Shelf, ['map', [X, Y_old, Z_old], R]),
+    is_at(Marker, ['map', [_, MY, _], _]),
+    %retract_location_of(Shelf),
+    Z is H/2,
+    Y is MY-D,
+    tell(is_at(Shelf, ['map', [X, Y, Z], R])),
+    shop:retract_shape_of(Shelf),
+    assert_object_color__(Shelf, [0.7,0.2,1]),
+    assert_object_shape__(Shelf, W, D, H).
 
 create_box(D, W, H, Color, Obj) :-
     tell(is_physical_object(Obj)),
@@ -68,8 +82,8 @@ assert_left_shelf_marker(Shelf, Pose, Depth, Width) :-
     Z is H/2,
     create_box(0.1, 0.1, 0.1, [0.5, 0.5, 0.5], Marker),
     tell([has_type(Marker, dmshop:'DMShelfMarkerLeft'),
-        triple(Shelf, dmshop:leftMarker, LeftMarker),
-        is_at(Marker, ['map', [Sx, Sy, Z], [0,0,0,1]])]).
+        triple(Shelf, dmshop:leftMarker, Marker),
+        is_at(Marker, ['map', [X, Y, Z], [0,0,0,1]])]).
 
 assert_right_shelf_marker(Shelf, Pose, Depth, Width) :-
     H = 0.1,
@@ -79,8 +93,8 @@ assert_right_shelf_marker(Shelf, Pose, Depth, Width) :-
     Z is H/2,
     create_box(0.1, 0.1, 0.1, [0.5, 0.5, 0.5], Marker),
     tell([has_type(Marker, dmshop:'DMShelfMarkerRight'),
-        triple(Shelf, dmshop:rightMarker, LeftMarker),
-        is_at(Marker, ['map', [Sx, Sy, Z], [0,0,0,1]])]).
+        triple(Shelf, dmshop:rightMarker, Marker),
+        is_at(Marker, ['map', [X, Y, Z], [0,0,0,1]])]).
 
 assert_shelf(Marker, Id, [_, [X,Y,Z], [X1,Y1,Z1,W1]]) :-
     (has_type(Marker, dmshop:'DMShelfMarkerRight')
@@ -105,7 +119,8 @@ assert_shelf(Marker, Id, [_, [X,Y,Z], [X1,Y1,Z1,W1]]) :-
         tell([triple(Shelf, dmshop:leftMarker, Marker),
             triple(Shelf, shop:'ShelfId', ShelfId)]),
         tell(is_at(Shelf, ['map', [SX, Y, SZ], [X1,Y1,Z1,W1]])))
-    ).
+    ),
+    writeln([Shelf,SX, Y, SZ]).
 
 adjust_shelf_pose(Shelf) :-
     triple(Shelf, dmshop:leftMarker, LeftMarker),
@@ -116,12 +131,14 @@ adjust_shelf_pose(Shelf) :-
 
     shop:retract_shape_of(Shelf),
     SW is (LX - RX),
-    assert_object_shape__(Shelf, 0.4 , SW, 1),
+    assert_object_shape__(Shelf, SW, 0.4,1),
     SX is (LX - (SW /2)),
 
     is_at(Shelf, ['map', [_, _, SZ], _]),
     retract_location_of(Shelf),
-    tell(is_at(Shelf, ['map', [SX, LY, SZ], [0,0,0,1]])).
+    tell(is_at(Shelf, ['map', [SX, LY, SZ], [0,0,0,1]])),
+    writeln(Shelf),
+    writeln([SX, LY, SZ]).
 
 
 retract_location_of(Object) :-
@@ -129,25 +146,45 @@ retract_location_of(Object) :-
     shop:retract_region_of(Location),
     shop:retract_entity(Location).
 
+create_left_marker(Left, Pose) :-
+    create_box(0.15,0.15,0.15, [1,1,0.2], Left),
+    %Pose = ['map', [6.0, 1.2, 0.030], [0,0,0,1]],
+    belief_marker_at(Left, 1, Pose).
+
+create_right_marker(Right, Pose1) :-
+    create_box(0.15,0.15,0.15, [1,1,0.2], Right),
+    %Pose1 = ['map', [4.0, 1.2, 0.030], [0,0,0,1]],
+    belief_marker_at(Right, 2, Pose1).
 
 
 :- begin_tests(environment).
 
-test('box create') :-
+/* test('box create') :-
     gtrace,
-    create_box(0.15,0.15,0.15, [1,1,0.2], Left), % Box b color 0.7,0.2,1 pose - x+(d_b - d_a)/2, y with width, z is h/2 
-    Pose = ['map', [2.5, 1.2, 0.030], [0,0,0,1]],
-    belief_marker_at(Left, 6, Pose),
-    create_box(0.15,0.15,0.15, [1,1,0.2], Right),
-    Pose1 = ['map', [1.5, 1.2, 0.030], [0,0,0,1]],
-    belief_marker_at(Right, 2, Pose1),
-    writeln(Obj).
+    Pose = ['map', [6.0, 1.2, 0.030], [0,0,0,1]],
+    create_left_marker(LM, Pose), % Box b color 0.7,0.2,1 pose - x+(d_b - d_a)/2, y with width, z is h/2  
+    Pose1 = ['map', [5.0, 1.2, 0.030], [0,0,0,1]],
+    create_right_marker(RM, Pose1),
+    belief_shelf_at(LM, 0.5 , 1.0, 1.6),
+    writeln([LM,RM]). */
 
-test('object color') :-
+
+test('belief shelf - assert markers') :-
+    gtrace,
+    create_box(1.0, 0.5, 1.6, [0.7,0.2,1], Shelf),
+    PS = ['map', [8.2, 1.8, 0.8], [0,0,0,1]],
+    belief_shelf_at(Shelf, PS),
+    triple(Shelf, dmshop:leftMarker, L),
+    triple(Shelf, dmshop:rightMarker, R),
+    is_at(L, LP),
+    is_at(R, RP),
+    writeln([L, LP, R, RP]).
+
+/* test('object color') :-
     % gtrace,
     tell(is_physical_object(O)),
     tell(has_type(ColorType, soma:'Color')), 
     tell(triple(O,soma:hasColor,ColorType)), 
-    tell(object_color_rgb(O, [0.5,0.5,0.5])).
+    tell(object_color_rgb(O, [0.5,0.5,0.5])). */
 
 :- end_tests(environment).
