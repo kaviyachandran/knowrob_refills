@@ -17,7 +17,7 @@
 :- rdf_db:rdf_register_ns(dmshop, 
     'http://knowrob.org/kb/dm-market.owl#', [keep(true)]).
 
-
+%%%%% TODO : Michael -- Add a structure of Shelf. How a shelf should look like. Define it with a predicate. for eg, it has layers, two markers
 %%%%% Belief marker at a pose then there is a shelf at ()
 
 belief_marker_at(Marker, Id, Pose) :- %%% Left odd num and right even num ids
@@ -45,6 +45,7 @@ belief_shelf_at(Marker, D, W, H) :-
     Y is MY-D,
     tell(is_at(Shelf, ['map', [X, Y, Z], R])),
     shop:retract_shape_of(Shelf),
+    shop:retract_color_of(Shelf),
     assert_object_color__(Shelf, [0.7,0.2,1]),
     assert_object_shape__(Shelf, W, D, H).
 
