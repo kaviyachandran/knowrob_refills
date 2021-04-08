@@ -105,7 +105,8 @@ assert_shelf(Marker, Id, [_, [X,Y,Z], [X1,Y1,Z1,W1]]) :-
     ->  tell(triple(Shelf, dmshop:rightMarker, Marker)),
         adjust_shelf_pose(Shelf)
     ;   S_W = 1, S_D = 0.4, S_H = 1,
-        create_box(S_D, S_W, S_H, [0.5, 0.5, 0.5], Shelf), %%% dim when not known   
+        create_box(S_D, S_W, S_H, [0.5, 0.5, 0.5], Shelf), %%% dim when not known
+        tell(has_type(Shelf, shop:'ShelfFrame')), 
         tell([triple(Shelf, dmshop:rightMarker, Marker),
             triple(Shelf, shop:'ShelfId', ShelfId)]),
         SX is X+(S_W/2), SZ is S_H/2,
@@ -116,6 +117,7 @@ assert_shelf(Marker, Id, [_, [X,Y,Z], [X1,Y1,Z1,W1]]) :-
         adjust_shelf_pose(Shelf)
     ;   S_W = 1, S_D = 0.4, S_H = 1,
         create_box(S_W, S_D, S_H, [0.5, 0.5, 0.5], Shelf), %%% dim when not known
+        tell(has_type(Shelf, shop:'ShelfFrame')),
         SX is X-(S_W/2), SZ is S_H/2, 
         tell([triple(Shelf, dmshop:leftMarker, Marker),
             triple(Shelf, shop:'ShelfId', ShelfId)]),
@@ -156,6 +158,19 @@ create_right_marker(Right, Pose1) :-
     create_box(0.15,0.15,0.15, [1,1,0.2], Right),
     %Pose1 = ['map', [4.0, 1.2, 0.030], [0,0,0,1]],
     belief_marker_at(Right, 2, Pose1).
+
+define_shelf(Shelf, NoOfLayers) :-
+    has_type(Shelf, shop:'ShelfFrame'),
+    forall(between(1,NoOfLayers,_),
+        (tell([instance_of(Layer, shop:'ShelfLayer'),
+        triple(Shelf, soma:hasPhysicalComponent, Layer)])
+    )),
+    triple(Shelf, dmshop:leftMarker, Left),
+    triple(Shelf, dmshop:rightMarker, Right),
+    tell([
+        triple(Shelf, soma:hasPhysicalComponent, Left),
+        triple(Shelf, soma:hasPh)ysicalComponent, Right)
+    ]).
 
 
 :- begin_tests(environment).
