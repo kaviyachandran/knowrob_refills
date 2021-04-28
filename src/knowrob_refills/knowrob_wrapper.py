@@ -16,6 +16,7 @@ from refills_perception_interface.tfwrapper import transform_pose, lookup_pose, 
 from refills_perception_interface.utils import print_with_prefix, ordered_load
 from rosprolog_client import Prolog, PrologException
 from rospy_message_converter.message_converter import convert_dictionary_to_ros_message
+from os.path import expanduser
 
 MAP = 'map'
 SHOP = 'shop'
@@ -33,6 +34,7 @@ SHELF_W100 = '{}:\'DMShelfW100\''.format(DM_MARKET)
 SHELF_W120 = '{}:\'DMShelfW120\''.format(DM_MARKET)
 SHELF_H = '{}:\'DMShelfH\''.format(DM_MARKET)
 SHELF_L = '{}:\'DMShelfL\''.format(DM_MARKET)
+home = expanduser("~")
 
 SEPARATOR = '{}:\'DMShelfSeparator4Tiles\''.format(DM_MARKET)
 MOUNTING_BAR = '{}:\'DMShelfMountingBar\''.format(DM_MARKET)
@@ -265,6 +267,7 @@ class KnowRob(object):
         if (initial_mongo_db is not None or republish_tf) and not neem_mode:
             self.republish_tf()
         if neem_mode:
+            # self.republish_tf()
             self.new_republish_tf()
         self.order_dict = None
         self.parse_shelf_order_yaml()
@@ -408,7 +411,7 @@ class KnowRob(object):
         q = 'tripledb_add_subgraph(user,{})'.format(new_name)
         self.once(q)
 
-    def get_shelf_layer_from_system(self, shelf_system_id):
+    def get_shelf_layer_from_system(self, shelf_system_id, filter=True):
         """
         :type shelf_system_id: str
         :return: returns dict mapping floor id to pose ordered from lowest to highest
@@ -428,7 +431,8 @@ class KnowRob(object):
             floors[floor_id] = floor_pose
         floors = floors.items()
         floors = list(sorted(floors, key=lambda x: x[1].pose.position.z))
-        floors = [x for x in floors if x[1].pose.position.z < MAX_SHELF_HEIGHT]
+        if filter:
+            floors = [x for x in floors if x[1].pose.position.z < MAX_SHELF_HEIGHT]
         self.floors = OrderedDict(floors)
         return self.floors
 
@@ -492,7 +496,7 @@ class KnowRob(object):
         frame_names = set()
         for i in range(3):
             try:
-                q = 'holds(X, knowrob:frameName, Frame), has_type(X, O), transitive(subclass_of(O, dul:\'Object\')).'
+                q = 'triple(X, knowrob:frameName, Frame), has_type(X, O), transitive(subclass_of(O, dul:\'Object\')).'
                 bindings = self.all_solutions(q)
                 frame_names_tmp = set()
                 for binding in bindings:
@@ -504,7 +508,8 @@ class KnowRob(object):
         q = 'forall( member(Frame, {0}), ' \
             '(tf_mng_lookup(Frame, _, {1}.{2}, P, _,_), ' \
             'tf_mem_set_pose(Frame, P, {1}.{2}),!)).'.format(list(frame_names), time.secs, time.nsecs)
-        bindings = self.once(q)
+        while self.once(q) == []:
+            rospy.logwarn('failed to republish tf')
         self.republish_marker()
 
     def new_republish_tf(self):
@@ -970,6 +975,10 @@ class KnowRob(object):
             return solution['Fs']
         return []
 
+    def is_facing_empty(self, facing_id):
+        q = '\+holds(\'{}\', shop:productInFacing, P)'.format(facing_id)
+        return self.once(q) != []
+
     def get_empty_facings_from_layer(self, shelf_layer_id):
         q = 'findall(F, (shelf_facing(\'{}\', F), \+holds(F, shop:productInFacing, _)),Fs)'.format(shelf_layer_id)
         solution = self.once(q)
@@ -1325,7 +1334,7 @@ class KnowRob(object):
         #     return False
 
     def load_neem(self, path):
-        q = 'remember(\'{0}\'), tf_mng_remember(\'{0}\').'.format(path)
+        q = 'remember(\'{0}\'), tf_mng_remember(\'{0}\').'.format(path).replace('~', home)
         bindings = self.once(q)
         return bindings != []
 

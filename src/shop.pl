@@ -809,13 +809,14 @@ comp_facingDepth(Facing, Selector, Offset, Value) :-
   Value is Value0 + Offset.
 
 comp_mainColorOfFacing(Facing, Color) :-
-  holds(Facing, shop:layerOfFacing, _), !,
-  ((\+(triple(Facing, shop:labelOfFacing, _);triple(Facing, shop:adjacentLabelOfFacing,_)),Color=[1.0, 0.35, 0.0, 0.5]);
-  % FIXME: MisplacedProductFacing seems slow, comp_MisplacedProductFacing is a bit faster
-   (comp_MisplacedProductFacing(Facing),Color=[1.0, 0.0, 0.0, 0.5]);
-   (\+ triple(Facing, shop:productInFacing, _),Color=[1.0, 1.0, 0.0, 0.5]);
-   (has_type(Facing, shop:'FullProductFacing'),Color=[0.0, 0.25, 0.0, 0.5]);
-   Color=[0.0, 1.0, 0.0, 0.5]), !.
+  Color=[1.0, 1.0, 1.0, 0.1], !.
+  %% holds(Facing, shop:layerOfFacing, _), !,
+  %% ((\+(triple(Facing, shop:labelOfFacing, _);triple(Facing, shop:adjacentLabelOfFacing,_)),Color=[1.0, 1.0, 1.0, 0.0]);
+  %% % FIXME: MisplacedProductFacing seems slow, comp_MisplacedProductFacing is a bit faster
+  %%  (comp_MisplacedProductFacing(Facing),Color=[1.0, 1.0, 1.0, 0.0]);
+  %%  (\+ triple(Facing, shop:productInFacing, _),Color=[1.0, 0.0, 0.0, 0.5]);
+  %%  (has_type(Facing, shop:'FullProductFacing'),Color=[1.0, 1.0, 1.0, 0.0]);
+  %%  Color=[1.0, 1.0, 1.0, 0.0]), !.
 
 comp_MisplacedProductFacing(Facing) :-
   holds(Facing,shop:productInFacing,Item),
