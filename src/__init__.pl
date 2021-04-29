@@ -34,6 +34,7 @@
 :- use_module(library('shop')).
 :- use_module(library('refills')).
 :- use_module(library('shop_reasoner')).
+:- use_module(library('planogram')).
 
 
 :- use_module(library('db/tripledb'), 
