@@ -578,24 +578,6 @@
     
 
 
-    <!-- http://knowrob.org/kb/shop.owl#hasDeviceId -->
-
-    <owl:DatatypeProperty rdf:about="http://knowrob.org/kb/shop.owl#hasDeviceId">
-        <rdfs:subPropertyOf rdf:resource="http://www.ontologydesignpatterns.org/ont/dul/DUL.owl#hasDataValue"/>
-        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
-    </owl:DatatypeProperty>
-    
-
-
-    <!-- http://knowrob.org/kb/shop.owl#hasUserId -->
-
-    <owl:DatatypeProperty rdf:about="http://knowrob.org/kb/shop.owl#hasUserId">
-        <rdfs:subPropertyOf rdf:resource="http://www.ontologydesignpatterns.org/ont/dul/DUL.owl#hasDataValue"/>
-        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
-    </owl:DatatypeProperty>
-    
-
-
     <!-- http://knowrob.org/kb/shop.owl#heightOfProduct -->
 
     <owl:DatatypeProperty rdf:about="http://knowrob.org/kb/shop.owl#heightOfProduct">
@@ -813,13 +795,6 @@
     <owl:Class rdf:about="http://knowrob.org/kb/shop.owl#Customer">
         <rdfs:subClassOf rdf:resource="http://knowrob.org/kb/shop.owl#ShopPersona"/>
         <rdfs:subClassOf rdf:resource="http://www.ontologydesignpatterns.org/ont/dul/DUL.owl#Person"/>
-        <rdfs:subClassOf>
-            <owl:Restriction>
-                <owl:onProperty rdf:resource="http://knowrob.org/kb/shop.owl#hasUserId"/>
-                <owl:qualifiedCardinality rdf:datatype="http://www.w3.org/2001/XMLSchema#nonNegativeInteger">1</owl:qualifiedCardinality>
-                <owl:onDataRange rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
-            </owl:Restriction>
-        </rdfs:subClassOf>
         <owl:disjointWith rdf:resource="http://knowrob.org/kb/shop.owl#ShopWorker"/>
     </owl:Class>
     
@@ -1010,23 +985,7 @@
         <rdfs:subClassOf rdf:resource="http://knowrob.org/kb/knowrob.owl#AssemblyAffordance"/>
     </owl:Class>
     
-
-
-    <!-- http://knowrob.org/kb/shop.owl#LoggingIn -->
-
-    <owl:Class rdf:about="http://knowrob.org/kb/shop.owl#LoggingIn">
-        <rdfs:subClassOf rdf:resource="http://knowrob.org/kb/shop.owl#ShopCustomerActivity"/>
-    </owl:Class>
     
-
-
-    <!-- http://knowrob.org/kb/shop.owl#LoggingOut -->
-
-    <owl:Class rdf:about="http://knowrob.org/kb/shop.owl#LoggingOut">
-        <rdfs:subClassOf rdf:resource="http://knowrob.org/kb/shop.owl#ShopCustomerActivity"/>
-    </owl:Class>
-    
-
 
     <!-- http://knowrob.org/kb/shop.owl#MisplacedProduct -->
 
@@ -1065,15 +1024,7 @@
         <rdfs:comment>Facing that has some displaced items (i.e., not of the same sku as the facing).</rdfs:comment>
     </owl:Class>
     
-
-
-    <!-- http://knowrob.org/kb/shop.owl#MobilePhone -->
-
-    <owl:Class rdf:about="http://knowrob.org/kb/shop.owl#MobilePhone">
-        <rdfs:subClassOf rdf:resource="http://www.ease-crc.org/ont/SOMA.owl#Appliance"/>
-    </owl:Class>
     
-
 
     <!-- http://knowrob.org/kb/shop.owl#MountableProduct -->
 
@@ -1989,16 +1940,8 @@
         </owl:equivalentClass>
         <rdfs:subClassOf rdf:resource="http://knowrob.org/kb/shop.owl#ShopCustomerActivity"/>
     </owl:Class>
+
     
-
-
-    <!-- http://knowrob.org/kb/shop.owl#SmartFridge -->
-
-    <owl:Class rdf:about="http://knowrob.org/kb/shop.owl#SmartFridge">
-        <rdfs:subClassOf rdf:resource="http://www.ease-crc.org/ont/SOMA.owl#Appliance"/>
-    </owl:Class>
-    
-
 
     <!-- http://knowrob.org/kb/shop.owl#StealingAProduct -->
 
@@ -2110,13 +2053,7 @@
         <rdfs:subClassOf rdf:resource="http://knowrob.org/kb/shop.owl#PlacedProduct"/>
     </owl:Class>
     
-
-
-    <!-- http://www.ease-crc.org/ont/SOMA.owl#Appliance -->
-
-    <owl:Class rdf:about="http://www.ease-crc.org/ont/SOMA.owl#Appliance"/>
     
-
 
     <!-- http://www.ease-crc.org/ont/SOMA.owl#Building -->
 
