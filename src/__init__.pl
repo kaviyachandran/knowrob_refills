@@ -33,6 +33,7 @@
 
 :- use_module(library('shop')).
 :- use_module(library('refills')).
+:- use_module(library('shop_reasoner')).
 
 
 :- use_module(library('db/tripledb'), 

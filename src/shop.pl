@@ -92,8 +92,7 @@
       product_dimensions(r,r),
       retract_shelf(r),
       assert_layer_id(r),
-      assert_facing_id(r),
-      get_number_of_items_in_facing(r, -)
+      assert_facing_id(r)
       ]).
 
 :- use_module(library('semweb/rdf_db')).
@@ -1488,7 +1487,3 @@ assert_facing_id(Layer) :-
     nth1(Id, SortedFacings, [Y, F]),
     tell(holds(F, shop:erpFacingId, Id)))
   ).
-
-get_number_of_items_in_facing(Facing, Quantity) :-
-  triple(F, shop:layerOfFacing, Layer),
-  aggregate_all(count, triple(F, 'http://knowrob.org/kb/shop.owl#productInFacing',_) , Quantity).
