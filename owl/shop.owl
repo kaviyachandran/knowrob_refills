@@ -587,6 +587,16 @@
     
 
 
+    <!-- http://knowrob.org/kb/shop.owl#hasShopId -->
+
+    <owl:DatatypeProperty rdf:about="http://knowrob.org/kb/shop.owl#hasShopId">
+        <rdfs:subPropertyOf rdf:resource="http://knowrob.org/kb/shop.owl#shopParameter"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#positiveInteger"/>
+        <rdfs:comment rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Assins the shop an unique id</rdfs:comment>
+    </owl:DatatypeProperty>
+    
+
+
     <!-- http://knowrob.org/kb/shop.owl#hasUserId -->
 
     <owl:DatatypeProperty rdf:about="http://knowrob.org/kb/shop.owl#hasUserId">
@@ -613,6 +623,16 @@
     
 
 
+    <!-- http://knowrob.org/kb/shop.owl#numberOfFacings -->
+
+    <owl:DatatypeProperty rdf:about="http://knowrob.org/kb/shop.owl#numberOfFacings">
+        <rdfs:subPropertyOf rdf:resource="http://knowrob.org/kb/shop.owl#productParameter"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#positiveInteger"/>
+        <rdfs:comment rdf:datatype="http://www.w3.org/2001/XMLSchema#string">A data type property that gives the number of facings in which a product is placed</rdfs:comment>
+    </owl:DatatypeProperty>
+    
+
+
     <!-- http://knowrob.org/kb/shop.owl#priceOfProduct -->
 
     <owl:DatatypeProperty rdf:about="http://knowrob.org/kb/shop.owl#priceOfProduct">
@@ -635,6 +655,16 @@
     <owl:DatatypeProperty rdf:about="http://knowrob.org/kb/shop.owl#productInShelfLayerId">
         <rdfs:subPropertyOf rdf:resource="http://knowrob.org/kb/shop.owl#productParameter"/>
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#positiveInteger"/>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://knowrob.org/kb/shop.owl#hasOrder -->
+
+    <owl:DatatypeProperty rdf:about="http://knowrob.org/kb/shop.owl#hasOrder">
+        <rdfs:subPropertyOf rdf:resource="http://knowrob.org/kb/shop.owl#productParameter"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#positiveInteger"/>
+        <rdfs:comment rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Product Order number denotes the order in which the product in placed on the shelf layer. For example, order number 3 represents that the items of the specific product type can be located 3rd from the left</rdfs:comment>
     </owl:DatatypeProperty>
     
 
