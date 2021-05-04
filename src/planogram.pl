@@ -2,8 +2,12 @@
     [ create_product_type/6
 ]
 
+:- use_module(library('model/OWL')).
+
 create_product_type(Name, Gtin, Dimension, Weight, Position) :-
-    tell(is_class(C)), tell(has_type(B, C)).
+    string_concat("Product", "_", Temp),
+    string_concat("Temp", Gtin, ProductName),
+    tell(is_class(ProductName)), tell(has_type(B, C)).
 
 
 /* 
