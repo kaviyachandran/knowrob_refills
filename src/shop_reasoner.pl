@@ -34,6 +34,7 @@
     [
     get_all_shelves(-),
     get_layers_in_shelf(r, -),
+    get_facings_in_layer(r, -),
     get_all_items_in_facing(r, -),
     get_dimensions(r, -, -, -),
     get_number_of_items_in_facing(r, -),
@@ -66,6 +67,12 @@ get_layers_in_shelf(Shelf, Layers) :-
     findall(Layer,
         (triple(Shelf, soma:hasPhysicalComponent, Layer)),
         Layers).
+
+
+get_facings_in_layer(Layer, Facings) :-
+    findall(Facing,
+        (triple(Facing, shop:layerOfFacing, Layer)),
+        Facings).
 
 %% get_all_items_in_facing(?Facing, ?Items) is det.
 %
