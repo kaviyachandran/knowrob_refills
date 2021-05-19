@@ -495,6 +495,24 @@
     
 
 
+    <!-- http://www.ease-crc.org/ont/SOMA.owl#isDesignOf -->
+
+    <owl:ObjectProperty rdf:about="http://www.ease-crc.org/ont/SOMA.owl#isDesignOf"/>
+    
+
+
+    <!-- http://www.ontologydesignpatterns.org/ont/dul/DUL.owl#hasComponent -->
+
+    <owl:ObjectProperty rdf:about="http://www.ontologydesignpatterns.org/ont/dul/DUL.owl#hasComponent"/>
+    
+
+
+    <!-- http://www.ontologydesignpatterns.org/ont/dul/DUL.owl#isComponentOf -->
+
+    <owl:ObjectProperty rdf:about="http://www.ontologydesignpatterns.org/ont/dul/DUL.owl#isComponentOf"/>
+    
+
+
     <!-- 
     ///////////////////////////////////////////////////////////////////////////////////////
     //
@@ -546,6 +564,8 @@
 
     <owl:DatatypeProperty rdf:about="http://knowrob.org/kb/shop.owl#erpFacingId">
         <rdfs:subPropertyOf rdf:resource="http://knowrob.org/kb/shop.owl#shopParameter"/>
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#FunctionalProperty"/>
+        <rdfs:domain rdf:resource="http://knowrob.org/kb/shop.owl#ProductFacing"/>
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#positiveInteger"/>
     </owl:DatatypeProperty>
     
@@ -555,6 +575,8 @@
 
     <owl:DatatypeProperty rdf:about="http://knowrob.org/kb/shop.owl#erpShelfId">
         <rdfs:subPropertyOf rdf:resource="http://knowrob.org/kb/shop.owl#shopParameter"/>
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#FunctionalProperty"/>
+        <rdfs:domain rdf:resource="http://knowrob.org/kb/shop.owl#ShelfFrame"/>
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#positiveInteger"/>
     </owl:DatatypeProperty>
     
@@ -564,6 +586,8 @@
 
     <owl:DatatypeProperty rdf:about="http://knowrob.org/kb/shop.owl#erpShelfLayerId">
         <rdfs:subPropertyOf rdf:resource="http://knowrob.org/kb/shop.owl#shopParameter"/>
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#FunctionalProperty"/>
+        <rdfs:domain rdf:resource="http://knowrob.org/kb/shop.owl#ShelfLayer"/>
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#positiveInteger"/>
     </owl:DatatypeProperty>
     
@@ -587,10 +611,22 @@
     
 
 
+    <!-- http://knowrob.org/kb/shop.owl#hasOrder -->
+
+    <owl:DatatypeProperty rdf:about="http://knowrob.org/kb/shop.owl#hasOrder">
+        <rdfs:subPropertyOf rdf:resource="http://knowrob.org/kb/shop.owl#productParameter"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#positiveInteger"/>
+        <rdfs:comment rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Product Order number denotes the order in which the product in placed on the shelf layer. For example, order number 3 represents that the items of the specific product type can be located 3rd from the left</rdfs:comment>
+    </owl:DatatypeProperty>
+    
+
+
     <!-- http://knowrob.org/kb/shop.owl#hasShopId -->
 
     <owl:DatatypeProperty rdf:about="http://knowrob.org/kb/shop.owl#hasShopId">
         <rdfs:subPropertyOf rdf:resource="http://knowrob.org/kb/shop.owl#shopParameter"/>
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#FunctionalProperty"/>
+        <rdfs:domain rdf:resource="http://knowrob.org/kb/shop.owl#Shop"/>
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#positiveInteger"/>
         <rdfs:comment rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Assins the shop an unique id</rdfs:comment>
     </owl:DatatypeProperty>
@@ -655,16 +691,6 @@
     <owl:DatatypeProperty rdf:about="http://knowrob.org/kb/shop.owl#productInShelfLayerId">
         <rdfs:subPropertyOf rdf:resource="http://knowrob.org/kb/shop.owl#productParameter"/>
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#positiveInteger"/>
-    </owl:DatatypeProperty>
-    
-
-
-    <!-- http://knowrob.org/kb/shop.owl#hasOrder -->
-
-    <owl:DatatypeProperty rdf:about="http://knowrob.org/kb/shop.owl#hasOrder">
-        <rdfs:subPropertyOf rdf:resource="http://knowrob.org/kb/shop.owl#productParameter"/>
-        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#positiveInteger"/>
-        <rdfs:comment rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Product Order number denotes the order in which the product in placed on the shelf layer. For example, order number 3 represents that the items of the specific product type can be located 3rd from the left</rdfs:comment>
     </owl:DatatypeProperty>
     
 
@@ -931,6 +957,14 @@
                 <owl:onClass rdf:resource="http://knowrob.org/kb/shop.owl#TakingProductFromAShelf"/>
             </owl:Restriction>
         </rdfs:subClassOf>
+    </owl:Class>
+    
+
+
+    <!-- http://knowrob.org/kb/shop.owl#Facing1 -->
+
+    <owl:Class rdf:about="http://knowrob.org/kb/shop.owl#Facing1">
+        <rdfs:subClassOf rdf:resource="http://knowrob.org/kb/shop.owl#ProductFacingStanding"/>
     </owl:Class>
     
 
@@ -1211,7 +1245,34 @@
 
     <owl:Class rdf:about="http://knowrob.org/kb/shop.owl#Planogram">
         <rdfs:subClassOf rdf:resource="http://www.ease-crc.org/ont/SOMA.owl#StructuralDesign"/>
+        <rdfs:subClassOf>
+            <owl:Restriction>
+                <owl:onProperty rdf:resource="http://www.ease-crc.org/ont/SOMA.owl#isDesignOf"/>
+                <owl:someValuesFrom rdf:resource="http://knowrob.org/kb/shop.owl#Shop"/>
+            </owl:Restriction>
+        </rdfs:subClassOf>
+        <rdfs:subClassOf>
+            <owl:Restriction>
+                <owl:onProperty rdf:resource="http://www.ontologydesignpatterns.org/ont/dul/DUL.owl#hasComponent"/>
+                <owl:someValuesFrom rdf:resource="http://knowrob.org/kb/shop.owl#Shelf"/>
+            </owl:Restriction>
+        </rdfs:subClassOf>
         <rdfs:comment rdf:datatype="http://www.w3.org/2001/XMLSchema#string">A design of a retail store that describes how the items are organized in the shelves</rdfs:comment>
+    </owl:Class>
+    
+
+
+    <!-- http://knowrob.org/kb/shop.owl#Planogram1 -->
+
+    <owl:Class rdf:about="http://knowrob.org/kb/shop.owl#Planogram1">
+        <rdfs:subClassOf rdf:resource="http://knowrob.org/kb/shop.owl#Planogram"/>
+        <rdfs:subClassOf>
+            <owl:Restriction>
+                <owl:onProperty rdf:resource="http://www.ease-crc.org/ont/SOMA.owl#isDesignOf"/>
+                <owl:qualifiedCardinality rdf:datatype="http://www.w3.org/2001/XMLSchema#nonNegativeInteger">1</owl:qualifiedCardinality>
+                <owl:onClass rdf:resource="http://knowrob.org/kb/shop.owl#Shop1"/>
+            </owl:Restriction>
+        </rdfs:subClassOf>
     </owl:Class>
     
 
@@ -1437,6 +1498,36 @@
     
 
 
+    <!-- http://knowrob.org/kb/shop.owl#Shelf -->
+
+    <owl:Class rdf:about="http://knowrob.org/kb/shop.owl#Shelf">
+        <rdfs:subClassOf rdf:resource="http://www.ease-crc.org/ont/SOMA.owl#DesignedComponent"/>
+        <rdfs:subClassOf>
+            <owl:Class>
+                <owl:intersectionOf rdf:parseType="Collection">
+                    <owl:Restriction>
+                        <owl:onProperty rdf:resource="http://www.ease-crc.org/ont/SOMA.owl#hasPhysicalComponent"/>
+                        <owl:someValuesFrom rdf:resource="http://knowrob.org/kb/shop.owl#ShelfSeparator"/>
+                    </owl:Restriction>
+                    <owl:Restriction>
+                        <owl:onProperty rdf:resource="http://www.ease-crc.org/ont/SOMA.owl#hasPhysicalComponent"/>
+                        <owl:allValuesFrom>
+                            <owl:Class>
+                                <owl:intersectionOf rdf:parseType="Collection">
+                                    <rdf:Description rdf:about="http://knowrob.org/kb/shop.owl#ShelfFrame"/>
+                                    <rdf:Description rdf:about="http://knowrob.org/kb/shop.owl#ShelfLabel"/>
+                                    <rdf:Description rdf:about="http://knowrob.org/kb/shop.owl#ShelfLayer"/>
+                                </owl:intersectionOf>
+                            </owl:Class>
+                        </owl:allValuesFrom>
+                    </owl:Restriction>
+                </owl:intersectionOf>
+            </owl:Class>
+        </rdfs:subClassOf>
+    </owl:Class>
+    
+
+
     <!-- http://knowrob.org/kb/shop.owl#ShelfBarPerception -->
 
     <owl:Class rdf:about="http://knowrob.org/kb/shop.owl#ShelfBarPerception">
@@ -1470,6 +1561,41 @@
     
 
 
+    <!-- http://knowrob.org/kb/shop.owl#ShelfDesign -->
+
+    <owl:Class rdf:about="http://knowrob.org/kb/shop.owl#ShelfDesign">
+        <rdfs:subClassOf rdf:resource="http://www.ease-crc.org/ont/SOMA.owl#StructuralDesign"/>
+        <rdfs:subClassOf>
+            <owl:Restriction>
+                <owl:onProperty rdf:resource="http://www.ease-crc.org/ont/SOMA.owl#isDesignOf"/>
+                <owl:someValuesFrom rdf:resource="http://knowrob.org/kb/shop.owl#Shelf"/>
+            </owl:Restriction>
+        </rdfs:subClassOf>
+        <rdfs:subClassOf>
+            <owl:Restriction>
+                <owl:onProperty rdf:resource="http://www.ontologydesignpatterns.org/ont/dul/DUL.owl#hasComponent"/>
+                <owl:someValuesFrom rdf:resource="http://knowrob.org/kb/shop.owl#ShelfLayer"/>
+            </owl:Restriction>
+        </rdfs:subClassOf>
+    </owl:Class>
+    
+
+
+    <!-- http://knowrob.org/kb/shop.owl#ShelfDesignId1 -->
+
+    <owl:Class rdf:about="http://knowrob.org/kb/shop.owl#ShelfDesignId1">
+        <rdfs:subClassOf rdf:resource="http://knowrob.org/kb/shop.owl#ShelfDesign"/>
+        <rdfs:subClassOf>
+            <owl:Restriction>
+                <owl:onProperty rdf:resource="http://www.ease-crc.org/ont/SOMA.owl#isDesignOf"/>
+                <owl:qualifiedCardinality rdf:datatype="http://www.w3.org/2001/XMLSchema#nonNegativeInteger">1</owl:qualifiedCardinality>
+                <owl:onClass rdf:resource="http://knowrob.org/kb/shop.owl#ShelfId1"/>
+            </owl:Restriction>
+        </rdfs:subClassOf>
+    </owl:Class>
+    
+
+
     <!-- http://knowrob.org/kb/shop.owl#ShelfFrame -->
 
     <owl:Class rdf:about="http://knowrob.org/kb/shop.owl#ShelfFrame">
@@ -1478,6 +1604,20 @@
             <owl:Restriction>
                 <owl:onProperty rdf:resource="http://www.ease-crc.org/ont/SOMA.owl#hasPhysicalComponent"/>
                 <owl:allValuesFrom rdf:resource="http://knowrob.org/kb/shop.owl#ShelfLayer"/>
+            </owl:Restriction>
+        </rdfs:subClassOf>
+    </owl:Class>
+    
+
+
+    <!-- http://knowrob.org/kb/shop.owl#ShelfFrame1 -->
+
+    <owl:Class rdf:about="http://knowrob.org/kb/shop.owl#ShelfFrame1">
+        <rdfs:subClassOf rdf:resource="http://knowrob.org/kb/shop.owl#ShelfFrame"/>
+        <rdfs:subClassOf>
+            <owl:Restriction>
+                <owl:onProperty rdf:resource="http://www.ontologydesignpatterns.org/ont/dul/DUL.owl#isComponentOf"/>
+                <owl:allValuesFrom rdf:resource="http://knowrob.org/kb/shop.owl#ShelfId1"/>
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
@@ -1539,6 +1679,20 @@
     
 
 
+    <!-- http://knowrob.org/kb/shop.owl#ShelfId1 -->
+
+    <owl:Class rdf:about="http://knowrob.org/kb/shop.owl#ShelfId1">
+        <rdfs:subClassOf rdf:resource="http://knowrob.org/kb/shop.owl#Shelf"/>
+        <rdfs:subClassOf>
+            <owl:Restriction>
+                <owl:onProperty rdf:resource="http://knowrob.org/kb/shop.owl#erpShelfId"/>
+                <owl:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</owl:hasValue>
+            </owl:Restriction>
+        </rdfs:subClassOf>
+    </owl:Class>
+    
+
+
     <!-- http://knowrob.org/kb/shop.owl#ShelfLabel -->
 
     <owl:Class rdf:about="http://knowrob.org/kb/shop.owl#ShelfLabel">
@@ -1548,6 +1702,20 @@
                 <owl:onProperty rdf:resource="http://knowrob.org/kb/shop.owl#articleNumberOfLabel"/>
                 <owl:qualifiedCardinality rdf:datatype="http://www.w3.org/2001/XMLSchema#nonNegativeInteger">1</owl:qualifiedCardinality>
                 <owl:onClass rdf:resource="http://knowrob.org/kb/shop.owl#ArticleNumber"/>
+            </owl:Restriction>
+        </rdfs:subClassOf>
+    </owl:Class>
+    
+
+
+    <!-- http://knowrob.org/kb/shop.owl#ShelfLabel1 -->
+
+    <owl:Class rdf:about="http://knowrob.org/kb/shop.owl#ShelfLabel1">
+        <rdfs:subClassOf rdf:resource="http://knowrob.org/kb/shop.owl#ShelfLabel"/>
+        <rdfs:subClassOf>
+            <owl:Restriction>
+                <owl:onProperty rdf:resource="http://knowrob.org/kb/shop.owl#labelOfFacing"/>
+                <owl:allValuesFrom rdf:resource="http://knowrob.org/kb/shop.owl#Facing1"/>
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
@@ -1588,6 +1756,20 @@
     
 
 
+    <!-- http://knowrob.org/kb/shop.owl#ShelfLayer1 -->
+
+    <owl:Class rdf:about="http://knowrob.org/kb/shop.owl#ShelfLayer1">
+        <rdfs:subClassOf rdf:resource="http://knowrob.org/kb/shop.owl#ShelfLayer"/>
+        <rdfs:subClassOf>
+            <owl:Restriction>
+                <owl:onProperty rdf:resource="http://www.ontologydesignpatterns.org/ont/dul/DUL.owl#isComponentOf"/>
+                <owl:allValuesFrom rdf:resource="http://knowrob.org/kb/shop.owl#ShelfId1"/>
+            </owl:Restriction>
+        </rdfs:subClassOf>
+    </owl:Class>
+    
+
+
     <!-- http://knowrob.org/kb/shop.owl#ShelfLayerBottom -->
 
     <owl:Class rdf:about="http://knowrob.org/kb/shop.owl#ShelfLayerBottom">
@@ -1606,6 +1788,26 @@
                 <owl:onProperty rdf:resource="http://knowrob.org/kb/knowrob.owl#objectActedOn"/>
                 <owl:qualifiedCardinality rdf:datatype="http://www.w3.org/2001/XMLSchema#nonNegativeInteger">1</owl:qualifiedCardinality>
                 <owl:onClass rdf:resource="http://knowrob.org/kb/shop.owl#ShelfLayer"/>
+            </owl:Restriction>
+        </rdfs:subClassOf>
+    </owl:Class>
+    
+
+
+    <!-- http://knowrob.org/kb/shop.owl#ShelfLayerDesign -->
+
+    <owl:Class rdf:about="http://knowrob.org/kb/shop.owl#ShelfLayerDesign">
+        <rdfs:subClassOf rdf:resource="http://www.ease-crc.org/ont/SOMA.owl#StructuralDesign"/>
+        <rdfs:subClassOf>
+            <owl:Restriction>
+                <owl:onProperty rdf:resource="http://www.ease-crc.org/ont/SOMA.owl#isDesignOf"/>
+                <owl:someValuesFrom rdf:resource="http://knowrob.org/kb/shop.owl#ShelfLayer"/>
+            </owl:Restriction>
+        </rdfs:subClassOf>
+        <rdfs:subClassOf>
+            <owl:Restriction>
+                <owl:onProperty rdf:resource="http://www.ontologydesignpatterns.org/ont/dul/DUL.owl#hasComponent"/>
+                <owl:someValuesFrom rdf:resource="http://knowrob.org/kb/shop.owl#ShelfLabel"/>
             </owl:Restriction>
         </rdfs:subClassOf>
     </owl:Class>
@@ -1757,6 +1959,14 @@
     
 
 
+    <!-- http://knowrob.org/kb/shop.owl#ShelfPartDesign -->
+
+    <owl:Class rdf:about="http://knowrob.org/kb/shop.owl#ShelfPartDesign">
+        <rdfs:subClassOf rdf:resource="http://www.ease-crc.org/ont/SOMA.owl#StructuralDesign"/>
+    </owl:Class>
+    
+
+
     <!-- http://knowrob.org/kb/shop.owl#ShelfSeparator -->
 
     <owl:Class rdf:about="http://knowrob.org/kb/shop.owl#ShelfSeparator">
@@ -1893,6 +2103,20 @@
             </owl:Restriction>
         </rdfs:subClassOf>
         <knowrob:todo>primary function axioms, and expected objects axioms</knowrob:todo>
+    </owl:Class>
+    
+
+
+    <!-- http://knowrob.org/kb/shop.owl#Shop1 -->
+
+    <owl:Class rdf:about="http://knowrob.org/kb/shop.owl#Shop1">
+        <rdfs:subClassOf rdf:resource="http://knowrob.org/kb/shop.owl#Shop"/>
+        <rdfs:subClassOf>
+            <owl:Restriction>
+                <owl:onProperty rdf:resource="http://knowrob.org/kb/shop.owl#hasShopId"/>
+                <owl:hasValue rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</owl:hasValue>
+            </owl:Restriction>
+        </rdfs:subClassOf>
     </owl:Class>
     
 
