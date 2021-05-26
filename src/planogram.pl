@@ -1,6 +1,6 @@
 :- module(planogram,
-    [ create_product_type/8,
-    compute_facing_erp_id/1
+    [ create_product_type/8
+    % compute_facing_erp_id/1
 ]).
 
 :- use_module(library('model/OWL')).
@@ -47,10 +47,10 @@ create_product_type(Name, Gtin, Dimension, Weight, Position, NumberOfFacing, Pro
         is_class(Label),
         subclass_of(Label, shop:'ShelfLabel'),
         is_restriction(R),
-        has_description(R, value(shop:articleNumberOfLabel, AN)),
+        is_restriction(R, value(shop:articleNumberOfLabel, AN)),
         subclass_of(Label, R),
         is_restriction(R1),
-        has_description(R1, only(dul:isComponentOf, ShelfLayer)),
+        is_restriction(R1, only(dul:isComponentOf, ShelfLayer)),
         subclass_of(Label, R1)
         ]),
     
@@ -59,13 +59,13 @@ create_product_type(Name, Gtin, Dimension, Weight, Position, NumberOfFacing, Pro
             tell([ is_class(Facing),
             subclass_of(Facing, shop:'ProductFacingStanding'),
             is_restriction(R1),
-            has_description(R1, only(dul:isLocationOf, ProductName)),
+            is_restriction(R1, only(dul:isLocationOf, ProductName)),
             subclass_of(Facing, R1),
             is_restriction(R2),
-            has_description(R2, only(shop:layerOfFacing, ShelfLayer)),
+            is_restriction(R2, only(shop:layerOfFacing, ShelfLayer)),
             subclass_of(Facing, R2),
             is_restriction(R3),
-            has_description(R3, only(shop:labelOfFacing, Label)),
+            is_restriction(R3, only(shop:labelOfFacing, Label)),
             subclass_of(Facing, R3)
     	    % triple(ProductName, dul:hasLocation, Facing),
             % triple(Facing, shop:layerOfFacing, ShelfLayer)
@@ -141,66 +141,98 @@ create_product_type(Name, Gtin, Dimension, Weight, Position, NumberOfFacing, Pro
 
 
 
-get_shelf_(ShelfId, Store, Shelf) :-
-    has_description(R, value(shop:erpShelfId, ShelfId)),
+get_shelf_(ShelfId, Store, ShelfFrame) :-
+    is_restriction(R, value(shop:erpShelfId, ShelfId)), 
     subclass_of(ShelfFrame, R),
+    subclass_of(ShelfFrame, shop:'ShelfFrame'),
+    is_restriction(R1, only(soma:isContainedIn, Store)),
     subclass_of(ShelfFrame, R1),
-    has_description(R1, only(soma:isContainedIn, Store)),
     !.
 
-get_shelf_(ShelfId, Store, Shelf) :-
+get_shelf_(ShelfId, Store, ShelfFrame) :-
     tell([  is_class(ShelfFrame),
             subclass_of(ShelfFrame, shop:'ShelfFrame'),
-            is_restriction(R),
-            has_description(R, value(shop:erpShelfId, ShelfId)),
+            instance_of(R, owl:'Restriction'),
+            is_restriction(R, value(shop:erpShelfId, ShelfId)),
             subclass_of(ShelfFrame, R),
-            is_restriction(R1),
-            has_description(R1, only(soma:isContainedIn, Store)),
+            instance_of(R1, owl:'Restriction'),
+            is_restriction(R1, only(soma:isContainedIn, Store)),
             subclass_of(ShelfFrame, R1)
         ]).
 
-get_shelf_layer_(Id, Shelf, Obj) :-
-     has_description(R, value(shop:erpShelfLayerId, ShelfId)),
-    subclass_of(ShelfFrame, R),
-    subclass_of(ShelfFrame, R1),
-    has_description(R1, only(dul:isComponentOf, Store)),!.
+get_shelf_layer_(Id, Shelf, ShelfLayer) :-
+    is_restriction(R1, only(dul:isComponentOf, Shelf)),
+    subclass_of(ShelfLayer, R1),
+    subclass_of(ShelfLayer, shop:'ShelfLayer'),
+    is_restriction(R, value(shop:erpShelfLayerId, Id)),
+    subclass_of(ShelfLayer, R),
+    !.
 
-get_shelf_layer_(Id, Shelf, Obj) :-
-    tell([  is_class(Obj),
-            subclass_of(Obj, shop:'ShelfLayer'),
-            is_restriction(R),
-            has_description(R, value(shop:erpShelfLayerId, Id)),
-            is_restriction(R1),
-            has_description(R1, only(shop:isComponentOf, Shelf)),
-            subclass_of(Obj, R1),
-            subclass_of(Obj, R)
+get_shelf_layer_(Id, Shelf, ShelfLayer) :-
+    tell([  is_class(ShelfLayer),
+            subclass_of(ShelfLayer, shop:'ShelfLayer'),
+            instance_of(R, owl:'Restriction'),
+            is_restriction(R, value(shop:erpShelfLayerId, Id)),
+            instance_of(R1, owl:'Restriction'),
+            is_restriction(R1, only(shop:isComponentOf, Shelf)),
+            subclass_of(ShelfLayer, R1),
+            subclass_of(ShelfLayer, R)
         ]).
 
 get_store_(Store, StoreId) :-
-    has_description(RId, value(shop:hasShopId, StoreId)),
-    subclass_of(Store, RId), !.
+    subclass_of(Store, shop:'Shop'),
+    is_restriction(RId, value(shop:hasShopId, StoreId)), 
+    subclass_of(Store, RId),!.
 
 get_store_(Store, StoreId) :-
     tell([  is_class(Store),
             subclass_of(Store, shop:'Shop'),
-            is_restriction(RId),
-            has_description(RId, value(shop:hasShopId, StoreId)),
+            instance_of(RId, owl:'Restriction'),
+            is_restriction(RId, value(shop:hasShopId, StoreId)),
             subclass_of(Store, RId)
         ]).
 
 
 
+
+
+%%%%%%%%%%%%%% Reasonign about differences
+
+% 1. Do the shelves differ? 
+% Check the number of vertices (Layers) if different yes else
+% check the number of product types in each layer when differs yes
+% 
+
+%%% utils
+
+compare_lists(A, B) :-
+    is_list(A), 
+    is_list(B), !.
+
+compare_list(A, B) :-
+    subsumes_term(A, B).
+
+%% list comparison also works usign the following
+
+elemcmp(A,B) :- var(A), var(B), ! ; A =@= B.
+
+/* compare_list(A, B) :-
+    maplist(elemcmp,A, B). */
+    
+
+    
+
 :- begin_tests(planogram).
 
-% test('product') :-
-%     writeln('I am here'),
-%     gtrace,
-%     create_product_type('shampoo', 45344545, [0.8, 0.2, 0.1], 2.3, [17, 5, 1], 2, _, 1),
-%     % create_product_type('soap', 453444563, [0.8, 0.2, 0.1], 2.3, [17, 5, 2], 3, _, 1),
-%     compute_facing_erp_id(1).
-
-test('recursion') :-
+test('product') :-
+    writeln('I am here'),
     gtrace,
-    test_list([1,2,3,4]).
+    create_product_type('shampoo', 45344545, [0.8, 0.2, 0.1], 2.3, [17, 5, 1], 2, _, 1).
+    % create_product_type('soap', 453444563, [0.8, 0.2, 0.1], 2.3, [17, 5, 2], 3, _, 1),
+    % compute_facing_erp_id(1).
+
+/* test('recursion') :-
+    gtrace,
+    compare_lists([1,2,3,4], [1,2,3,4]). */
 
 :- end_tests(planogram).
