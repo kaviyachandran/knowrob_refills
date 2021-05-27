@@ -906,7 +906,7 @@ belief_shelf_right_marker_at(Pose,MarkerId,Marker):-
 
 %%
 %
-belief_shelf_at(LeftMarkerId,RightMarkerId,Shelf) :-
+belief_shelf_at(LeftMarkerId,RightMarkerId,Shelf, Shop) :-
   shelf_marker(LeftMarkerId,LeftMarker),
   shelf_marker(RightMarkerId,RightMarker),
   once((
@@ -914,7 +914,8 @@ belief_shelf_at(LeftMarkerId,RightMarkerId,Shelf) :-
     shelf_with_marker(Shelf,LeftMarker);
     shelf_with_marker(Shelf,RightMarker);
     % new shelf
-    belief_new_shelf_at(LeftMarkerId,RightMarkerId,Shelf))).
+    belief_new_shelf_at(LeftMarkerId,RightMarkerId,Shelf))),
+    tell(triple(Shop, soma:containsObject, Shelf)).
 
 belief_new_shelf_at(LeftMarkerId,RightMarkerId,Shelf) :-
   % infer shelf type (e.g. 'DMShelfFrameW100')
