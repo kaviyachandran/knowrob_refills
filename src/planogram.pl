@@ -35,7 +35,9 @@ create_product_type(Name, Gtin, Dimension, Weight, Position, NumberOfFacing, Pro
 
     	triple(ProductName, soma:hasMassValue, Weight),
         triple(ProductName, shop:hasOrder, ProductOrder),
-        triple(ProductName, shop:numberOfFacing, NumberOfFacing),
+
+        is_restriction(R1,value(shop:numberOfFacing, NumberOfFacing)),
+        subclass_of(ProductName, R1),
     	has_label(ProductName, Name)]),
     
     get_shelf_(ShelfId, Store, Shelf),
@@ -194,7 +196,7 @@ get_store_(Store, StoreId) :-
 
 
 
-shelf_individual_of(Shelf, ShelfClass) :-
+shelf_individual_of(Shelf, ShelfClass, DiffInNumOfLayers, Diff) :-
     var(ShelfClass), !,
     
     triple(Shelf, shop:erpShelfId, Id),
@@ -209,23 +211,60 @@ shelf_individual_of(Shelf, ShelfClass) :-
     %%% Check if the components satisfy 
     findall(LayerInstance, 
             (triple(Shelf, soma:hasPhysicalComponent, LayerInstance),
-            layer_instance_of(LayerInstance, ShelfClass,LayerClass)),
-            LayerInstances).
+            layer_instance_of(LayerInstance, ShelfClass, Diff)),
+            LayerInstances),
+    length(LayerClasses, NumberOfPlannedShelfComponents),
+    length(LayerInstances, NumberOfShelfComponents),
+    DiffInNumOfLayers is LayerClasses - LayerInstance.
 
+layer_instance_of(LayerInstance, ShelfClass, LayersWithProductDiff) :-
+    triple(LayerInstance, shop:erpShelfLayerId, LayerId),
+    get_shelf_layer_(LayerId, ShelfClass, LayerClass),
+    get_products_in_layer_(LayerClass, ProductIds),
 
-layer_instance_of(Layer, SClass, LClass) :-
-    triple(Layer, shop:erpShelfLayerId, Id),
-    get_shelf_layer_(Id, SClass, LClass),
+    findall(ProductDiff,
+        (triple(LayerInstance, soma:hasPhysicalComponent, Label),
+        has_type(Label, shop:'ShelfLabel'),
+        triple(Label, shop:articleNumberOfLabel, AN),
+        triple(AN, shop:gtin, InstanceId),
+        (member(InstanceId, ProductIds) -> 
+            get_diff_in_facing_count_(InstanceId, Diff);
+            Diff is -10),
+        append([InstanceId], [Diff], ProductDiff)),
+    ProductDiffs),
+    append([LayerInstance], ProductDiffs, LayersWithProductDiff).
 
     %%% Check the parts of the shelf
     
+get_diff_in_facing_count_(Id, Diff) :-
+    triple(AN, shop:gtin, Id),
+    get_number_of_facings_in_plan_(AN, PlannedNumberOfFacing),
 
+    triple(Label, shop:articleNumberOfLabel, AN),
+    aggregate_all(count, triple(_, 'http://knowrob.org/kb/shop.owl#labelOfFacing', Label) ,
+    RealNoOfFacing),
+    Diff is PlannedNumberOfFacing - RealNoOfFacing.
+
+get_number_of_facings_in_plan_(AN, Number):-
+    is_restriction(R,value(shop:articleNumberOfProduct, AN)),
+    subclass_of(_, R),
+    subclass_of(_, R1),
+    is_restriction(R1,value(shop:numberOfFacing, Number)).
 
 get_all_shelf_layers_(Shelf, Ls) :-
     findall(L, 
         (is_restriction(R1, only(dul:isComponentOf, Shelf)),
         subclass_of(L, R1)), 
         Ls).
+
+get_products_in_layer_(LayerClass, Ids) :-
+    findall(Id,
+        (is_restriction(R1, only(dul:isComponentOf, LayerClass)),
+        subclass_of(R1, Label),
+        subclass_of(R, Label),
+        is_restriction(R,value(shop:articleNumberOfLabel, AN)),
+        triple(AN, shop:gtin, Id)),
+    Ids).
 
 %%%%%%%%%%%%%% Reasonign about differences
 
@@ -234,21 +273,107 @@ get_all_shelf_layers_(Shelf, Ls) :-
 % check the number of product types in each layer when differs yes
 % 
 
-%%% utils
+%%%% 
+% Computing Edit-distance considering vertex insertion, vertex deletion
+% edge insertion, edge deletion
+%%%%
 
-compare_lists(A, B) :-
-    is_list(A), 
-    is_list(B), !.
+compare_shelves(ShelfInPlan, RealShelf, Distance) :-
+    get_all_shelf_layers_(ShelfInPlan, LayerClasses),
 
-compare_list(A, B) :-
-    subsumes_term(A, B).
+    aggregate_all(count, triple(RealShelf, 'http://www.ease-crc.org/ont/SOMA.owl#hasPhysicalComponent', 
+        Layers), RealNoOfLayers),
+    length(LayerClasses, NumberOfPlannedShelfComponents),
+    DiffInNumOfLayers is LayerClasses - RealNoOfLayers,
+    compute_layer_ids_(DiffInNumOfLayers, NumberOfPlannedShelfComponents, Ids),
+    (DiffInNumOfLayers > 0 -> 
+        call(insert_layer, ShelfInPlan, Ids, 0, Op);
+        call(delete_layer, RealShelf, Ids, 0, Op)),
+    
+    %% Shelf layers to compare
+    numlist(1, NumberOfPlannedShelfComponents, Idlist),
+    subtract(Idlist, Ids, IdsToCompare),
+    
+    %%% Check if the components satisfy 
+    member(Id, IdsToCompare),
+    compare_shelf_layer(Id, ShelfInPlan, RealShelf, MoreOp).
 
-%% list comparison also works usign the following
+compare_shelf_layer(Id, PlanShelf, RealShelf, Operations) :-
+    get_shelf_layer_(Id, PlanShelf, LayerPlan),
+    
+     
 
-elemcmp(A,B) :- var(A), var(B), ! ; A =@= B.
+%%%
+% Insert labels and then facings  - 1 operation for each vertex and 
+% edge insertion
+%%%
+insert_layer([Id | Rest], Shelf, Temp, Op) :-
+    % inseriting a layer vertex + adding an edge
+    Ins1 is Temp + 2,
+    get_shelf_layer_(Id, Shelf, Layer),
+    % get the number of labels
+    aggregate_all(count, (triple(Restr, 'http://www.w3.org/2002/07/owl#onProperty','http://www.ontologydesignpatterns.org/ont/dul/DUL.owl#isComponentOf'),
+    triple(Restr, 'http://www.w3.org/2002/07/owl#allValuesFrom', Layer)), NumberOfLabels),
+    % get the number of facings for each label
+    findall(NoOfOp,
+        (is_restriction(R1, only(dul:isComponentOf, LayerClass)),
+        subclass_of(R1, Label),
+        subclass_of(R, Label),
+        is_restriction(R,value(shop:articleNumberOfLabel, AN)),
+        triple(AN, shop:gtin, Id),
+        is_restriction(R3,value(shop:articleNumberOfProduct, AN)),
+        subclass_of(ProductName, R3),
+        subclass_of(ProductName, R4),
+        is_restriction(R4,value(shop:numberOfFacing, NumberOfFacing)),
+        NoOfOp is 2*(1+NumberOfFacing)
+        ),
+    NoOfOps),
+    sumlist(NoOfOps, Total),
+    Ins2 is (2*NumberOfLabels) + Total + Ins1,
+    insert_layer(Rest, Shelf, Ins2, Op).
 
-/* compare_list(A, B) :-
-    maplist(elemcmp,A, B). */
+insert_layer([], S, Temp, Temp).
+    
+
+%%
+%  Get the number of labels, facings in the real shelf
+%%
+delete_layer([Id | Rest], Shelf, Temp, Op) :-
+    Del1 is Temp +2,
+    triple(Layer, shop:erpShelfLayerId, Id),
+    triple(Shelf, soma:hasPhysicalComponent, Layer),
+
+    findall(Op,
+        (triple(Layer, soma:hasPhysicalComponent, Label),
+        aggregate_all(count, triple(_, 'http://knowrob.org/kb/shop.owl#labelOfFacing', Label),
+            NumberOfFacings),
+        Op is 2*(1 + (2*NumberOfFacings))), % 1 - insertion of label 1 - for each facing and 1 - for each product in facing
+        Ops),
+    
+    sumlist(Ops, Total),
+    Del2 is Del1 + Total,
+    delete_layer(Rest, Shelf, Del2, Op).
+
+delete_layer([], S, Total, Total).
+
+ /*    comp([_| R], Op, Y) :-
+        % N is A *10,
+        % (var(Op) -> Op is 0, X is N;
+        X is Op + 1,
+        comp(R, X, Y).
+    
+    comp([], Op, Op).  */
+
+
+
+compute_layer_ids_(Num, NumPlan,Ids) :-
+    Num > 0,
+    numlist(Num, NumPlan, Ids);
+    Start is Num * -1,
+    numlist(Start, NumPlan, Ids).
+
+
+%%%%% Realo creation for testing 
 
 create_realo_store(StoreNum, Store) :-
     tell([has_type(Store, shop:'Shop'),
@@ -287,10 +412,9 @@ get_shelflayerR(Id, L):-
         triple(L, shop:erpShelfLayerId, Id)]).
 
 get_product_and_art_num(ProdId, P, AN) :-
-    (is_restriction(R, value(shop:articleNumberOfProduct, AN)),
     triple(AN, shop:gtin, ProdId),
-    subclass_of(P, R));
-    ()
+    is_restriction(R, value(shop:articleNumberOfProduct, AN)),
+    subclass_of(P, R).
 
 :- begin_tests(planogram).
 
