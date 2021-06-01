@@ -15,7 +15,7 @@ create_planogram(StoreId) :-
         is_restriction(R, exactly(soma:isDesignOf, 1, Store)),
         subclass_of(Plan, R)]).
 
-create_product_type(Name, Gtin, Dimension, Weight, Position, NumberOfFacing, ProductName, StoreId) :-
+create_product_type(Name, Gtin, Dimension, Weight, Position, NumberOfFacing, StoreId, ProductName) :-
     [Depth, Width, Height] = Dimension,
     [ShelfId, ShelfLayerId, ProductOrder] = Position,
     get_store_(Store, StoreId),
@@ -141,60 +141,7 @@ create_product_type(Name, Gtin, Dimension, Weight, Position, NumberOfFacing, Pro
 
 % create_facing_id_start_(_,_, 1).
 
-
-
-get_shelf_(ShelfId, Store, ShelfFrame) :-
-    is_restriction(R, value(shop:erpShelfId, ShelfId)), 
-    subclass_of(ShelfFrame, R),
-    subclass_of(ShelfFrame, shop:'ShelfFrame'),
-    is_restriction(R1, only(soma:isContainedIn, Store)),
-    subclass_of(ShelfFrame, R1),
-    !.
-
-get_shelf_(ShelfId, Store, ShelfFrame) :-
-    tell([  is_class(ShelfFrame),
-            subclass_of(ShelfFrame, shop:'ShelfFrame'),
-            instance_of(R, owl:'Restriction'),
-            is_restriction(R, value(shop:erpShelfId, ShelfId)),
-            subclass_of(ShelfFrame, R),
-            instance_of(R1, owl:'Restriction'),
-            is_restriction(R1, only(soma:isContainedIn, Store)),
-            subclass_of(ShelfFrame, R1)
-        ]).
-
-get_shelf_layer_(Id, Shelf, ShelfLayer) :-
-    is_restriction(R1, only(dul:isComponentOf, Shelf)),
-    subclass_of(ShelfLayer, R1),
-    subclass_of(ShelfLayer, shop:'ShelfLayer'),
-    is_restriction(R, value(shop:erpShelfLayerId, Id)),
-    subclass_of(ShelfLayer, R),
-    !.
-
-get_shelf_layer_(Id, Shelf, ShelfLayer) :-
-    tell([  is_class(ShelfLayer),
-            subclass_of(ShelfLayer, shop:'ShelfLayer'),
-            instance_of(R, owl:'Restriction'),
-            is_restriction(R, value(shop:erpShelfLayerId, Id)),
-            instance_of(R1, owl:'Restriction'),
-            is_restriction(R1, only(dul:isComponentOf, Shelf)),
-            subclass_of(ShelfLayer, R1),
-            subclass_of(ShelfLayer, R)
-        ]).
-
-get_store_(Store, StoreId) :-
-    subclass_of(Store, shop:'Shop'),
-    is_restriction(RId, value(shop:hasShopId, StoreId)), 
-    subclass_of(Store, RId),!.
-
-get_store_(Store, StoreId) :-
-    tell([  is_class(Store),
-            subclass_of(Store, shop:'Shop'),
-            instance_of(RId, owl:'Restriction'),
-            is_restriction(RId, value(shop:hasShopId, StoreId)),
-            subclass_of(Store, RId)
-        ]).
-
-
+% Compare between shelf and shelf instance
 
 shelf_individual_of(Shelf, ShelfClass, DiffInNumOfLayers, Diff) :-
     var(ShelfClass), !,
@@ -228,7 +175,7 @@ layer_instance_of(LayerInstance, ShelfClass, LayersWithProductDiff) :-
         triple(Label, shop:articleNumberOfLabel, AN),
         triple(AN, shop:gtin, InstanceId),
         (member(InstanceId, ProductIds) -> 
-            get_diff_in_facing_count_(InstanceId, Diff);
+            get_diff_in_facing_count(InstanceId, Diff);
             Diff is -10),
         append([InstanceId], [Diff], ProductDiff)),
     ProductDiffs),
@@ -236,7 +183,7 @@ layer_instance_of(LayerInstance, ShelfClass, LayersWithProductDiff) :-
 
     %%% Check the parts of the shelf
     
-get_diff_in_facing_count_(Id, Diff) :-
+get_diff_in_facing_count(Id, Diff) :-
     triple(AN, shop:gtin, Id),
     get_number_of_facings_in_plan_(AN, PlannedNumberOfFacing),
 
@@ -244,27 +191,6 @@ get_diff_in_facing_count_(Id, Diff) :-
     aggregate_all(count, triple(_, 'http://knowrob.org/kb/shop.owl#labelOfFacing', Label) ,
     RealNoOfFacing),
     Diff is PlannedNumberOfFacing - RealNoOfFacing.
-
-get_number_of_facings_in_plan_(AN, Number):-
-    is_restriction(R,value(shop:articleNumberOfProduct, AN)),
-    subclass_of(_, R),
-    subclass_of(_, R1),
-    is_restriction(R1,value(shop:numberOfFacing, Number)).
-
-get_all_shelf_layers_(Shelf, Ls) :-
-    findall(L, 
-        (is_restriction(R1, only(dul:isComponentOf, Shelf)),
-        subclass_of(L, R1)), 
-        Ls).
-
-get_products_in_layer_(LayerClass, Ids) :-
-    findall(Id,
-        (is_restriction(R1, only(dul:isComponentOf, LayerClass)),
-        subclass_of(R1, Label),
-        subclass_of(R, Label),
-        is_restriction(R,value(shop:articleNumberOfLabel, AN)),
-        triple(AN, shop:gtin, Id)),
-    Ids).
 
 %%%%%%%%%%%%%% Reasonign about differences
 
@@ -299,9 +225,13 @@ compare_shelves(ShelfInPlan, RealShelf, Distance) :-
     compare_shelf_layer(Id, ShelfInPlan, RealShelf, MoreOp).
 
 compare_shelf_layer(Id, PlanShelf, RealShelf, Operations) :-
-    get_shelf_layer_(Id, PlanShelf, LayerPlan),
-    
-     
+    get_shelf_layer_(Id, PlanShelf, LayerPlan).
+    % Get the AN of label of the plan 
+    % Get the AN of labels from the real layer
+    % get the labels to be removed - subtract(RealLabel, PlanLabels, DeleteLabels)
+    % Get the labels to be inserted - subtract(PlanLabel, RealLabels, InsertLabels)
+    % Compare the facings of labels with same article number in both plan and real
+    % intersection(PL, RL, CommonLabels).
 
 %%%
 % Insert labels and then facings  - 1 operation for each vertex and 
@@ -364,13 +294,111 @@ delete_layer([], S, Total, Total).
     
     comp([], Op, Op).  */
 
-
+% util predicates
 
 compute_layer_ids_(Num, NumPlan,Ids) :-
     Num > 0,
     numlist(Num, NumPlan, Ids);
     Start is Num * -1,
     numlist(Start, NumPlan, Ids).
+
+get_number_of_facings_in_plan_(AN, Number):-
+    is_restriction(R,value(shop:articleNumberOfProduct, AN)),
+    subclass_of(_, R),
+    subclass_of(_, R1),
+    is_restriction(R1,value(shop:numberOfFacing, Number)).
+
+get_all_shelf_layers_(Shelf, Ls) :-
+    findall(L, 
+        (is_restriction(R1, only(dul:isComponentOf, Shelf)),
+        subclass_of(L, R1)), 
+        Ls).
+
+get_products_in_layer_(LayerClass, Ids) :-
+    findall(Id,
+        (is_restriction(R1, only(dul:isComponentOf, LayerClass)),
+        subclass_of(R1, Label),
+        subclass_of(R, Label),
+        is_restriction(R,value(shop:articleNumberOfLabel, AN)),
+        triple(AN, shop:gtin, Id)),
+    Ids).
+
+get_shelf_(ShelfId, Store, ShelfFrame) :-
+    is_restriction(R, value(shop:erpShelfId, ShelfId)), 
+    subclass_of(ShelfFrame, R),
+    subclass_of(ShelfFrame, shop:'ShelfFrame'),
+    is_restriction(R1, only(soma:isContainedIn, Store)),
+    subclass_of(ShelfFrame, R1),
+    !.
+
+get_shelf_(ShelfId, Store, ShelfFrame) :-
+    tell([  is_class(ShelfFrame),
+            subclass_of(ShelfFrame, shop:'ShelfFrame'),
+            instance_of(R, owl:'Restriction'),
+            is_restriction(R, value(shop:erpShelfId, ShelfId)),
+            subclass_of(ShelfFrame, R),
+            instance_of(R1, owl:'Restriction'),
+            is_restriction(R1, only(soma:isContainedIn, Store)),
+            subclass_of(ShelfFrame, R1)
+        ]).
+
+get_shelf_layer_(Id, Shelf, ShelfLayer) :-
+    is_restriction(R1, only(dul:isComponentOf, Shelf)),
+    subclass_of(ShelfLayer, R1),
+    subclass_of(ShelfLayer, shop:'ShelfLayer'),
+    is_restriction(R, value(shop:erpShelfLayerId, Id)),
+    subclass_of(ShelfLayer, R),
+    !.
+
+get_shelf_layer_(Id, Shelf, ShelfLayer) :-
+    tell([  is_class(ShelfLayer),
+            subclass_of(ShelfLayer, shop:'ShelfLayer'),
+            instance_of(R, owl:'Restriction'),
+            is_restriction(R, value(shop:erpShelfLayerId, Id)),
+            instance_of(R1, owl:'Restriction'),
+            is_restriction(R1, only(dul:isComponentOf, Shelf)),
+            subclass_of(ShelfLayer, R1),
+            subclass_of(ShelfLayer, R)
+        ]).
+
+get_store_(Store, StoreId) :-
+    subclass_of(Store, shop:'Shop'),
+    is_restriction(RId, value(shop:hasShopId, StoreId)), 
+    subclass_of(Store, RId),!.
+
+get_store_(Store, StoreId) :-
+    tell([  is_class(Store),
+            subclass_of(Store, shop:'Shop'),
+            instance_of(RId, owl:'Restriction'),
+            is_restriction(RId, value(shop:hasShopId, StoreId)),
+            subclass_of(Store, RId)
+        ]).
+
+
+
+%%% reorder the ids of the shelf layers before comparison
+
+reorder_realogram_shelf_layer_numbers(ShelfId, Store) :-
+    % get the number of shelf layers of a shelf in plan
+    % get the number of layers in real
+    get_shelf_layer_(ShelfId, Store, ShelfClass),
+    triple(RealShelf, shop:erpShelfId, ShelfId),
+
+    aggregate_all(count, ((triple(Restr, 'http://www.w3.org/2002/07/owl#onProperty','http://www.ontologydesignpatterns.org/ont/dul/DUL.owl#isComponentOf'),
+    triple(Restr, 'http://www.w3.org/2002/07/owl#allValuesFrom', ShelfClass))), NumberOfPlannedShelfComponents),
+    aggregate_all(count, triple(RealShelf, 'http://www.ease-crc.org/ont/SOMA.owl#hasPhysicalComponent', 
+        Layers), RealNoOfLayers),
+    
+    Diff is NumberOfPlannedShelfComponents - RealNoOfLayers,
+    % As the number of scanned layers are less than the real number of layers
+
+    (Diff > 0 ->
+    forall(triple(RealShelf, 'http://www.ease-crc.org/ont/SOMA.owl#hasPhysicalComponent', Layer),
+        (triple(Layer, shop:erpShelfLayerId, CurrId),
+        CorrectedId is CurrId+Diff,
+        tripledb_forget(Layer, shop:erpShelfLayerId, CurrId),
+        tell(triple(Layer, shop:erpShelfLayerId, CorrectedId))
+    ))).
 
 
 %%%%% Realo creation for testing 
