@@ -68,7 +68,7 @@
       %%%%% rooming in
       belief_shelf_left_marker_at(r,r,r),
       belief_shelf_right_marker_at(r,r,r),
-      belief_shelf_at(r,r,r),
+      belief_shelf_at(r,r,r,r),
       shelf_classify(r,+,+,+),
       shelf_with_marker(r,r),
       marker_tag_to_erp_id(r,r),
@@ -336,7 +336,7 @@ shelf_facings_mark_dirty(ShelfLayer) :-
   findall(X, (
     shelf_facing(ShelfLayer,X),
     shelf_facing_update(X)
-  ), AllFacings),
+  ), _),
   marker_plugin:republish.
 
 % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
@@ -1463,7 +1463,7 @@ assert_layer_id(Shelf) :-
   findall([Z, Layer],
         (
         triple(Shelf, soma:hasPhysicalComponent, Layer),
-        is_at(Layer, ['map', [X1,Y,Z], _]),
+        is_at(Layer, ['map', [_,_,Z], _]),
         assert_facing_id(Layer)
         ),
         Layers),
@@ -1479,7 +1479,7 @@ assert_layer_id(Shelf) :-
 assert_facing_id(Layer) :-
   findall([Y, F],
           (triple(F, shop:layerOfFacing, Layer),
-          is_at(F, ['map', [X,Y,Z], _])),
+          is_at(F, ['map', [_,Y,_], _])),
           Facings),
   sort(Facings, SortedFacings),
   forall(
