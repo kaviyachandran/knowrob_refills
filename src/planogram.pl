@@ -190,7 +190,7 @@ get_diff_in_facing_count(Id, Diff) :-
     triple(Label, shop:articleNumberOfLabel, AN),
     aggregate_all(count, triple(_, 'http://knowrob.org/kb/shop.owl#labelOfFacing', Label) ,
     RealNoOfFacing),
-    Diff is PlannedNumberOfFacing - RealNoOfFacing.
+    Diff is RealNoOfFacing - PlannedNumberOfFacing.
 
 %%%%%%%%%%%%%% Reasonign about differences
 
