@@ -143,7 +143,7 @@ create_product_type(Name, Gtin, Dimension, Weight, Position, NumberOfFacing, Sto
 
 % Compare between shelf and shelf instance
 
-shelf_individual_of(Shelf, ShelfClass, DiffInNumOfLayers, Diff) :-
+shelf_individual_of(Shelf, ShelfClass, DiffInNumOfLayers, Differences) :-
     var(ShelfClass), !,
     
     triple(Shelf, shop:erpShelfId, Id),
@@ -156,13 +156,13 @@ shelf_individual_of(Shelf, ShelfClass, DiffInNumOfLayers, Diff) :-
     get_all_shelf_layers_(ShelfClass, LayerClasses),
 
     %%% Check if the components satisfy 
-    findall(LayerInstance, 
+    findall(Diff,  
             (triple(Shelf, soma:hasPhysicalComponent, LayerInstance),
             layer_instance_of(LayerInstance, ShelfClass, Diff)),
-            LayerInstances),
+            Differences),
     length(LayerClasses, NumberOfPlannedShelfComponents),
-    length(LayerInstances, NumberOfShelfComponents),
-    DiffInNumOfLayers is LayerClasses - LayerInstance.
+    length(Differences, NumberOfShelfComponents),
+    DiffInNumOfLayers is NumberOfPlannedShelfComponents - NumberOfShelfComponents.
 
 layer_instance_of(LayerInstance, ShelfClass, LayersWithProductDiff) :-
     triple(LayerInstance, shop:erpShelfLayerId, LayerId),
