@@ -7,8 +7,8 @@
 
 %%For now, using store id as 1.
 
-create_planogram(StoreId) :-
-    get_store_(Store, StoreId),
+create_planogram(StoreId, Store) :-
+    tell_store_(Store, StoreId),
     tell([is_class(Plan),
         subclass_of(Plan, shop:'Planogram'),
         instance_of(R, owl:'Restriction'),
@@ -40,8 +40,10 @@ create_product_type(Name, Gtin, Dimension, Weight, Position, NumberOfFacing, Sto
         subclass_of(ProductName, R1),
     	has_label(ProductName, Name)]),
     
-    get_shelf_(ShelfId, Store, Shelf),
-    get_shelf_layer_(ShelfLayerId, Shelf, ShelfLayer),
+    (get_shelf_(ShelfId, Store, Shelf); 
+    tell_shelf_(ShelfId, Store, Shelf)),
+    (get_shelf_layer_(ShelfLayerId, Shelf, ShelfLayer);
+    tell_shelf_layer_(ShelfLayerId, Shelf, ShelfLayer)),
 
     tell([
         % triple(Store, soma:contains, Shelf),
@@ -141,30 +143,29 @@ create_product_type(Name, Gtin, Dimension, Weight, Position, NumberOfFacing, Sto
 
 % create_facing_id_start_(_,_, 1).
 
-% Compare between shelf and shelf instance
+% Compare between shelf and shelf instance - comments after disc with Sascha
+% - If it exist - existence_of_shelf (both ways - real and plan shelf input)
+% - existence_of_layers
+% - return the restrictions that are not satisfied
 
-shelf_individual_of(Shelf, ShelfClass, DiffInNumOfLayers, Differences) :-
-    var(ShelfClass), !,
-    
-    triple(Shelf, shop:erpShelfId, Id),
-    triple(Store, soma:containsObject, Shelf),
-    triple(Store, shop:hasShopId, ShopId),
+shelf_individual_of(Shelf, ShelfClass, DiffRealogramLayers) :-
+    get_equivalent_shelf_class_(Shelf, ShelfClass),
 
-    get_store_(StorePlan, ShopId),
-    get_shelf_(Id, StorePlan, ShelfClass),
+    %hack to fix the ids of the realogram layers as the top layers might not be scanned
+    reorder_realogram_shelf_layer_numbers(ShelfClass, Shelf),
 
-    get_all_shelf_layers_(ShelfClass, LayerClasses),
-
+   %%% Check if the components satisfy 
     %%% Check if the components satisfy 
-    findall(Diff,  
-            (triple(Shelf, soma:hasPhysicalComponent, LayerInstance),
-            layer_instance_of(LayerInstance, ShelfClass, Diff)),
-            Differences),
-    length(LayerClasses, NumberOfPlannedShelfComponents),
-    length(Differences, NumberOfShelfComponents),
-    DiffInNumOfLayers is NumberOfPlannedShelfComponents - NumberOfShelfComponents.
+   findall(Diff,  
+        (triple(Shelf, soma:hasPhysicalComponent, LayerInstance),
+        layer_instance_of(LayerInstance, ShelfClass, Diff)),
+        Differences),
+        length(LayerClasses, NumberOfPlannedShelfComponents),
+        length(Differences, NumberOfShelfComponents),
+        DiffInNumOfLayers is NumberOfPlannedShelfComponents - NumberOfShelfComponents.
 
-layer_instance_of(LayerInstance, ShelfClass, LayersWithProductDiff) :-
+
+layer_instance_of(LayerInstance, LayersWithProductDiff) :-
     triple(LayerInstance, shop:erpShelfLayerId, LayerId),
     get_shelf_layer_(LayerId, ShelfClass, LayerClass),
     get_products_in_layer_(LayerClass, ProductIds),
@@ -192,7 +193,7 @@ get_diff_in_facing_count(Id, Diff) :-
     RealNoOfFacing),
     Diff is RealNoOfFacing - PlannedNumberOfFacing.
 
-%%%%%%%%%%%%%% Reasonign about differences
+%%%%%%%%%%%%%% Quantifying the differences
 
 % 1. Do the shelves differ? 
 % Check the number of vertices (Layers) if different yes else
@@ -331,7 +332,7 @@ get_shelf_(ShelfId, Store, ShelfFrame) :-
     subclass_of(ShelfFrame, R1),
     !.
 
-get_shelf_(ShelfId, Store, ShelfFrame) :-
+tell_shelf_(ShelfId, Store, ShelfFrame) :-
     tell([  is_class(ShelfFrame),
             subclass_of(ShelfFrame, shop:'ShelfFrame'),
             instance_of(R, owl:'Restriction'),
@@ -350,7 +351,7 @@ get_shelf_layer_(Id, Shelf, ShelfLayer) :-
     subclass_of(ShelfLayer, R),
     !.
 
-get_shelf_layer_(Id, Shelf, ShelfLayer) :-
+tell_shelf_layer_(Id, Shelf, ShelfLayer) :-
     tell([  is_class(ShelfLayer),
             subclass_of(ShelfLayer, shop:'ShelfLayer'),
             instance_of(R, owl:'Restriction'),
@@ -362,11 +363,11 @@ get_shelf_layer_(Id, Shelf, ShelfLayer) :-
         ]).
 
 get_store_(Store, StoreId) :-
-    subclass_of(Store, shop:'Shop'),
-    is_restriction(RId, value(shop:hasShopId, StoreId)), 
-    subclass_of(Store, RId),!.
+    is_restriction(RId, value(shop:hasShopId, StoreId)),
+    subclass_of(Store, RId),
+    subclass_of(Store, shop:'Shop').
 
-get_store_(Store, StoreId) :-
+tell_store_(Store, StoreId) :-
     tell([  is_class(Store),
             subclass_of(Store, shop:'Shop'),
             instance_of(RId, owl:'Restriction'),
@@ -374,16 +375,28 @@ get_store_(Store, StoreId) :-
             subclass_of(Store, RId)
         ]).
 
+get_equivalent_shelf_class_(Shelf, ShelfClass) :-
+    \+ var(ShelfClass).
 
+get_equivalent_shelf_class_(Shelf, ShelfClass) :-
+    triple(Shelf, shop:erpShelfId, Id),
+    triple(Store, soma:containsObject, Shelf),
+    triple(Store, shop:hasShopId, ShopId),
+
+    is_restriction(RId, value(shop:hasShopId, StoreId)),
+    subclass_of(Store, RId),
+    subclass_of(Store, shop:'Shop'),
+    
+    is_restriction(R, value(shop:erpShelfId, Id)), 
+    subclass_of(ShelfClass, R),
+    is_restriction(R1, only(soma:isContainedIn, Store)),
+    subclass_of(ShelfClass, R1).
 
 %%% reorder the ids of the shelf layers before comparison
 
-reorder_realogram_shelf_layer_numbers(ShelfId, Store) :-
+reorder_realogram_shelf_layer_numbers(ShelfClass,RealShelf) :-
     % get the number of shelf layers of a shelf in plan
     % get the number of layers in real
-    get_shelf_layer_(ShelfId, Store, ShelfClass),
-    triple(RealShelf, shop:erpShelfId, ShelfId),
-
     aggregate_all(count, ((triple(Restr, 'http://www.w3.org/2002/07/owl#onProperty','http://www.ontologydesignpatterns.org/ont/dul/DUL.owl#isComponentOf'),
     triple(Restr, 'http://www.w3.org/2002/07/owl#allValuesFrom', ShelfClass))), NumberOfPlannedShelfComponents),
     aggregate_all(count, triple(RealShelf, 'http://www.ease-crc.org/ont/SOMA.owl#hasPhysicalComponent', 
@@ -393,12 +406,13 @@ reorder_realogram_shelf_layer_numbers(ShelfId, Store) :-
     % As the number of scanned layers are less than the real number of layers
 
     (Diff > 0 ->
-    forall(triple(RealShelf, 'http://www.ease-crc.org/ont/SOMA.owl#hasPhysicalComponent', Layer),
+    (forall(triple(RealShelf, 'http://www.ease-crc.org/ont/SOMA.owl#hasPhysicalComponent', Layer),
         (triple(Layer, shop:erpShelfLayerId, CurrId),
         CorrectedId is CurrId+Diff,
         tripledb_forget(Layer, shop:erpShelfLayerId, CurrId),
-        tell(triple(Layer, shop:erpShelfLayerId, CorrectedId))
-    ))).
+        tell(triple(Layer, shop:erpShelfLayerId, CorrectedId)))
+    )); 
+    true).
 
 
 %%%%% Realo creation for testing 
@@ -408,8 +422,8 @@ create_realo_store(StoreNum, Store) :-
         triple(Store, shop:hasShopId, StoreNum)]).
 
 create_realogram_test_shelf(Store, ShelfNum, ShelfLayerNum, ProdId, NoOfFacings) :-
-    get_shelfR(ShelfNum, Shelf),
-    get_shelflayerR(ShelfLayerNum, Layer),
+    get_shelfR(Store, ShelfNum, Shelf),
+    get_shelflayerR(ShelfLayerNum, Shelf, Layer),
 
     tell([ instance_of(AN, shop:'ArticleNumber'),
         triple(AN, shop:gtin, ProdId),
@@ -429,15 +443,19 @@ create_realogram_test_shelf(Store, ShelfNum, ShelfLayerNum, ProdId, NoOfFacings)
                 triple(Facing, shop:productLabelOfFacing, P)
                 ])).
 
-get_shelfR(Num, Shelf):-
-    triple(Shelf, shop:erpShelfId, Num);
+get_shelfR(Store, Num, Shelf):-
+    (triple(Shelf, shop:erpShelfId, Num),
+    triple(Store, soma:containsObject, Shelf));
     tell([ has_type(Shelf, shop:'ShelfFrame'),
-        triple(Shelf, shop:erpShelfId, Num)]).
+        triple(Shelf, shop:erpShelfId, Num),
+        triple(Store, soma:containsObject, Shelf)]).
 
-get_shelflayerR(Id, L):-
-    triple(L, shop:erpShelfLayerId, Id);
+get_shelflayerR(Id, Shelf, L):-
+    (triple(L, shop:erpShelfLayerId, Id),
+    triple(Shelf, soma:hasPhysicalComponent, L));
     tell([ has_type(L, shop:'ShelfLayer'),
-        triple(L, shop:erpShelfLayerId, Id)]).
+        triple(L, shop:erpShelfLayerId, Id),
+        triple(Shelf, soma:hasPhysicalComponent, L)]).
 
 get_product_and_art_num(ProdId, P, AN) :-
     triple(AN, shop:gtin, ProdId),
@@ -452,14 +470,48 @@ get_product_and_art_num(ProdId, P, AN) :-
 test('product') :-
     writeln('I am here'),
     gtrace,
-    create_product_type('shampoo', 45344545, [0.8, 0.2, 0.1], 2.3, [17, 5, 1], 2, _, 100),
-    create_product_type('soap1', 453444563, [0.8, 0.2, 0.1], 2.3, [17, 5, 2], 3, _, 100),
-    create_product_type('soap2', 45347565563, [0.8, 0.2, 0.1], 2.3, [17, 5, 3], 1, _, 100),
-    create_product_type('soap3', 45354756563, [0.8, 0.2, 0.1], 2.3, [17, 5, 4], 1, _, 100).
+    create_realo_store(100, RealStore),
+    create_realogram_test_shelf(RealStore, 17, 5, 45344545, 2),
+    create_realogram_test_shelf(RealStore, 17, 5, 453444563, 3),
+    get_shelfR(RealStore, 17, RealShelf),
+    
+    create_planogram(100, Store),
+    create_product_type('shampoo', 45344545, [0.8, 0.2, 0.1], 2.3, [17, 5, 1], 2, 100, P1),
+    create_product_type('soap1', 453444563, [0.8, 0.2, 0.1], 2.3, [17, 5, 2], 3, 100 , P2),
+
+    get_shelf_(17, Store, ShelfClass),
+    shelf_individual_of(RealShelf, ShelfClass, Diff).
+    /*create_product_type('soap2', 45347565563, [0.8, 0.2, 0.1], 2.3, [17, 5, 3], 1, _, 100),
+    create_product_type('soap3', 45354756563, [0.8, 0.2, 0.1], 2.3, [17, 5, 4], 1, _, 100). */
     % compute_facing_erp_id(1).
 
 /* test('recursion') :-
     gtrace,
     compare_lists([1,2,3,4], [1,2,3,4]). */
+
+    
+get_layers_test(Shelf, Temp, L1) :-
+        triple(Shelf, soma:hasPhysicalComponent, L),
+        writeln(L),
+        get_layers_test(Shelf, [L| Temp],L1),
+        fail.
+    
+get_layers_test(Shelf, Temp, Temp).
+
+get_layers_test(Shelf, [], []) :- print_message(warning, 'no layers for the shelf').
+
+
+/* test('without loop') :-
+    tell([is_physical_object(Shelf),
+    is_physical_object(Layer),
+    is_physical_object(Layer1),
+    is_physical_object(Layer2),
+    triple(Shelf, soma:hasPhysicalComponent, Layer),
+    triple(Shelf, soma:hasPhysicalComponent, Layer1),
+    triple(Shelf, soma:hasPhysicalComponent, Layer2)]),
+    gtrace,
+    get_layers_test(Shelf, [], L),
+    % triple(Shelf, soma:hasPhysicalComponent, L),
+    writeln(L). */
 
 :- end_tests(planogram).
