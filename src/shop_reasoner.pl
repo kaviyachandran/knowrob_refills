@@ -40,7 +40,8 @@
     get_number_of_items_in_facing(r, -),
     get_pose_in_desired_reference_frame(r,r, -,-),
     get_model_path(r, -),
-    get_product_location(r, -,-,-,-)
+    get_product_location(r, -,-,-,-),
+    get_product_id_in_facing(r, -)
     ]).
 
 %% get_all_shelves(?Shelves) is det.
@@ -148,3 +149,16 @@ get_product_location(ProductType, Item, Shelf, ShelfLayer, Facing) :-
     triple(Facing ,shop:productInFacing, Item),
     triple(Facing, shop:layerOfFacing, Layer),
     triple(Shelf, soma:hasPhysicalComponent, Layer).
+
+get_product_dimension(ProductName, Depth, Width, Height) :-
+    product_dimensions(ProductName, [Depth, Width, Height]).
+
+%%% get_product_id_in_facing(?Facing, ?ProductName)
+% 
+% Gives the product that is associated with the given facing.
+%
+get_product_id_in_facing(Facing, ProductName) :-
+    triple(Facing, shop:labelOfFacing, Label),
+    triple(Label, shop:articleNumberOfLabel, AN),
+    is_restriction(R,value(shop:articleNumberOfProduct, AN)),
+    subclass_of(ProductName, R).
