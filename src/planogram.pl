@@ -55,7 +55,11 @@ create_product_type(Name, Gtin, Dimension, Weight, Position, NumberOfFacing, Sto
         subclass_of(Label, R),
         is_restriction(R1),
         is_restriction(R1, only(dul:isComponentOf, ShelfLayer)),
-        subclass_of(Label, R1)
+        subclass_of(Label, R1),
+        %%% Add cardinality constraint on facing property to label
+        is_restriction(LabelFacingRest),
+        is_restriction(LabelFacingRest,exactly(shop:facingAssociatedWithLabel, NumberofFacing, shop:'ProductFacingStanding')),
+        subclass_of(Label, LabelFacingRest)
         ]),
     
     numlist(1, NumberOfFacing, Num),
@@ -469,7 +473,7 @@ get_product_and_art_num(ProdId, P, AN) :-
 
 test('product') :-
     writeln('I am here'),
-    gtrace,
+    % gtrace,
     create_realo_store(100, RealStore),
     create_realogram_test_shelf(RealStore, 17, 5, 45344545, 2),
     create_realogram_test_shelf(RealStore, 17, 5, 453444563, 3),
@@ -485,6 +489,10 @@ test('product') :-
     create_product_type('soap3', 45354756563, [0.8, 0.2, 0.1], 2.3, [17, 5, 4], 1, _, 100). */
     % compute_facing_erp_id(1).
 
+test('create realo') :-
+    gtrace,
+    create_realo_store(100, Store),
+    create_realogram_test_shelf(Store, 17, 5, 45344545).
 /* test('recursion') :-
     gtrace,
     compare_lists([1,2,3,4], [1,2,3,4]). */
