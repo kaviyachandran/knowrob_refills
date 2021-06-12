@@ -67,7 +67,27 @@ test('owl_satisfied_by_value') :-
         triple(FObj, dul:isLocationOf, PObj)
         ]),
     current_scope(QS),
-    gtrace,
     plowl_individual:owl_satisfied_by(R1, FObj, [QS,_{}]->FS).
+
+test('cardinality cons') :-
+    tell([is_class(Label),
+        subclass_of(Label, shop:'ShelfLabel'),
+        is_restriction(LabelFacingRest),
+        is_restriction(LabelFacingRest,exactly(shop:facingAssociatedWithLabel, 2, shop:'ProductFacingStanding')),
+        subclass_of(Label, LabelFacingRest)
+        ]),
+    
+    tell([ is_physical_object(LabelIns),
+        instance_of(LabelIns, shop:'ShelfLabel'),
+        is_physical_object(FObj),
+        is_physical_object(FObj1),
+        has_type(FObj, shop:'ProductFacingStanding'),
+        has_type(FObj1, shop:'ProductFacingStanding'),
+        triple(LabelIns, shop:facingAssociatedWithLabel, FObj),
+        triple(LabelIns, shop:facingAssociatedWithLabel, FObj1)
+        ]),
+        current_scope(QS),
+        gtrace,
+        plowl_individual:owl_satisfied_by(LabelFacingRest, LabelIns, [QS,_{}]->FS).
 
 :- end_tests(test).
