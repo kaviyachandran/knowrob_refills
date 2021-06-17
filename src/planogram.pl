@@ -36,8 +36,8 @@ create_product_type(Name, Gtin, Dimension, Weight, Position, NumberOfFacing, Sto
     	triple(ProductName, soma:hasMassValue, Weight),
         triple(ProductName, shop:hasOrder, ProductOrder),
 
-        is_restriction(R1,value(shop:numberOfFacing, NumberOfFacing)),
-        subclass_of(ProductName, R1),
+       /*  is_restriction(R1,value(shop:numberOfFacing, NumberOfFacing)),
+        subclass_of(ProductName, R1), */
     	has_label(ProductName, Name)]),
     
     (get_shelf_(ShelfId, Store, Shelf); 
@@ -54,7 +54,7 @@ create_product_type(Name, Gtin, Dimension, Weight, Position, NumberOfFacing, Sto
         is_restriction(R, value(shop:articleNumberOfLabel, AN)),
         subclass_of(Label, R),
         is_restriction(R1),
-        is_restriction(R1, only(dul:isComponentOf, ShelfLayer)),
+        is_restriction(R1, only(soma:isLinkOf, ShelfLayer)),
         subclass_of(Label, R1),
         %%% Add cardinality constraint on facing property to label
         is_restriction(LabelFacingRest),
@@ -197,6 +197,10 @@ get_diff_in_facing_count(Id, Diff) :-
     RealNoOfFacing),
     Diff is RealNoOfFacing - PlannedNumberOfFacing.
 
+constraints_violated_by_label_instance(LabelClass, LabelInstance) :-
+
+
+
 %%%%%%%%%%%%%% Quantifying the differences
 
 % 1. Do the shelves differ? 
@@ -251,7 +255,7 @@ insert_layer([Id | Rest], Shelf, Temp, Op) :-
     triple(Restr, 'http://www.w3.org/2002/07/owl#allValuesFrom', Layer)), NumberOfLabels),
     % get the number of facings for each label
     findall(NoOfOp,
-        (is_restriction(R1, only(dul:isComponentOf, LayerClass)),
+        (is_restriction(R1, only(soma:hasPhysicalComponent, LayerClass)),
         subclass_of(R1, Label),
         subclass_of(R, Label),
         is_restriction(R,value(shop:articleNumberOfLabel, AN)),
@@ -315,13 +319,13 @@ get_number_of_facings_in_plan_(AN, Number):-
 
 get_all_shelf_layers_(Shelf, Ls) :-
     findall(L, 
-        (is_restriction(R1, only(dul:isComponentOf, Shelf)),
+        (is_restriction(R1, only(soma:hasPhysicalComponent, Shelf)),
         subclass_of(L, R1)), 
         Ls).
 
 get_products_in_layer_(LayerClass, Ids) :-
     findall(Id,
-        (is_restriction(R1, only(dul:isComponentOf, LayerClass)),
+        (is_restriction(R1, only(soma:hasPhysicalComponent, LayerClass)),
         subclass_of(R1, Label),
         subclass_of(R, Label),
         is_restriction(R,value(shop:articleNumberOfLabel, AN)),
@@ -348,7 +352,7 @@ tell_shelf_(ShelfId, Store, ShelfFrame) :-
         ]).
 
 get_shelf_layer_(Id, Shelf, ShelfLayer) :-
-    is_restriction(R1, only(dul:isComponentOf, Shelf)),
+    is_restriction(R1, only(soma:hasPhysicalComponent, Shelf)),
     subclass_of(ShelfLayer, R1),
     subclass_of(ShelfLayer, shop:'ShelfLayer'),
     is_restriction(R, value(shop:erpShelfLayerId, Id)),
@@ -361,7 +365,7 @@ tell_shelf_layer_(Id, Shelf, ShelfLayer) :-
             instance_of(R, owl:'Restriction'),
             is_restriction(R, value(shop:erpShelfLayerId, Id)),
             instance_of(R1, owl:'Restriction'),
-            is_restriction(R1, only(dul:isComponentOf, Shelf)),
+            is_restriction(R1, only(soma:hasPhysicalComponent, Shelf)),
             subclass_of(ShelfLayer, R1),
             subclass_of(ShelfLayer, R)
         ]).

@@ -83,11 +83,43 @@ test('cardinality cons') :-
         is_physical_object(FObj1),
         has_type(FObj, shop:'ProductFacingStanding'),
         has_type(FObj1, shop:'ProductFacingStanding'),
-        triple(LabelIns, shop:facingAssociatedWithLabel, FObj),
-        triple(LabelIns, shop:facingAssociatedWithLabel, FObj1)
+        /* triple(LabelIns, shop:facingAssociatedWithLabel, FObj),
+        triple(LabelIns, shop:facingAssociatedWithLabel, FObj1) */
+        triple(FObj, shop:'labelOfFacing', LabelIns),
+
         ]),
         current_scope(QS),
         gtrace,
         plowl_individual:owl_satisfied_by(LabelFacingRest, LabelIns, [QS,_{}]->FS).
+
+test('check all the restrictions') :-
+    tell([is_class(Layer),
+        subclass_of(Layer, shop:'ShelfLayer'),
+        is_class(Label),
+        subclass_of(Label, shop:'ShelfLabel'),
+        is_restriction(LabelFacingRest),
+        is_restriction(LabelFacingRest,exactly(shop:facingAssociatedWithLabel, 2, shop:'ProductFacingStanding')),
+        subclass_of(Label, LabelFacingRest),
+        is_restriction(R1),
+        is_restriction(R1, only(soma:isLinkOf, Layer)),
+        subclass_of(Label, R1)
+        ]),
+    tell([ is_physical_object(LabelIns),
+        instance_of(LabelIns, shop:'ShelfLabel'),
+        is_physical_object(FObj),
+        is_physical_object(FObj1),
+        has_type(FObj, shop:'ProductFacingStanding'),
+        has_type(FObj1, shop:'ProductFacingStanding'),
+        triple(FObj, shop:labelOfFacing, LabelIns),
+        triple(FObj1, shop:labelOfFacing, LabelIns)
+        ]),
+
+    %% To check if 
+    %% - Problem in the planogram represe to define the restriction I go from bottom 
+    %% to top like e.g: label to layer.
+    %% layer to shelf. But in realogram, it goes from top to bottom like layer to label,
+    %% shelf to layer.
+    
+
 
 :- end_tests(test).
