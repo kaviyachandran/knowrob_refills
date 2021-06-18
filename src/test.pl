@@ -83,28 +83,62 @@ test('cardinality cons') :-
         is_physical_object(FObj1),
         has_type(FObj, shop:'ProductFacingStanding'),
         has_type(FObj1, shop:'ProductFacingStanding'),
-        /* triple(LabelIns, shop:facingAssociatedWithLabel, FObj),
-        triple(LabelIns, shop:facingAssociatedWithLabel, FObj1) */
-        triple(FObj, shop:'labelOfFacing', LabelIns),
-
+        triple(LabelIns, shop:facingAssociatedWithLabel, FObj),
+        triple(LabelIns, shop:facingAssociatedWithLabel, FObj1)
         ]),
         current_scope(QS),
-        gtrace,
         plowl_individual:owl_satisfied_by(LabelFacingRest, LabelIns, [QS,_{}]->FS).
 
 assert_label_rel(LabelIns) :-
-    triple(F, shop:labeOfFacing, LabelIns),
+    triple(F, shop:labelOfFacing, LabelIns),
     tell(triple(LabelIns, shop:facingAssociatedWithLabel, F)),
-    assert_label_rel(LabelIns),
     fail.
 
-assert_label_rel(LabelIns).
+assert_label_rel(_).
 
-get_violated_restrictions(LabelC, LabelIns) :-
+is_value_restriction(R) :-
+    triple(R, owl:hasValue, _).
+
+is_article_value_equal_(V, V1) :-
+    triple(V, shop:gtin, G),
+    triple(V1, shop:gtin, G).
+
+compare_component_value_(Class, Instance, Property) :-
+    subclass_of(Class, R),
+    is_restriction(R),
+    has_description(R, value(Property, Val)),
+    holds(Instance, Property, Val).
+
+check_label_value_violation(value(Property, Value), Instane) :-
+    holds(Instane, Property, Value1),
+    is_article_value_equal(Value, Value1).
+
+collect_restrictions(LabelC, LabelIns, Temp, Rest) :-
+     % checks
+    subclass_of(LabelC, Restriction),
+    is_restriction(Restriction),
+    \+ member(Restriction, Temp),
+    ((is_value_restriction(Restriction),
+    has_description(Restriction, Desc),
+    check_label_value_violation(Desc, LabelIns),
+    Temp1 = [Restriction | Temp]);
+    (current_scope(QS),
+    \+ plowl_individual:owl_satisfied_by(Restriction, LabelIns, [QS,_{}]->FS) -> 
+    Temp1 = [Restriction  | Temp]; Temp1 = [])),
+    collect_restrictions(LabelC, LabelIns, Temp1, Rest).
+
+collect_restrictions(LabelC, LabelIns, Temp, Temp).
+
+collect_restrictions(_, _, [], []) :- print_message(info, 'No violations').
+
+get_violated_restrictions(LabelC, LabelIns, Rest) :-
+    % Assert due to propertz discrepancies
     triple(LayerIns, soma:hasPhysicalComponent, LabelIns),
     has_type(LabelIns, shop:'ShelfLabel'),
-    tell(triple(LabelIns, soma:isLinkOf, LayerIns)),
+    tell(triple(LabelIns, dul:isComponentOf, LayerIns)),
     assert_label_rel(LabelIns),
+    collect_restrictions(LabelC, LabelIns, [], Rest).
+
 
 
 test('check all the restrictions') :-
@@ -116,7 +150,7 @@ test('check all the restrictions') :-
         is_restriction(LabelFacingRest,exactly(shop:facingAssociatedWithLabel, 2, shop:'ProductFacingStanding')),
         subclass_of(Label, LabelFacingRest),
         is_restriction(R1),
-        is_restriction(R1, only(soma:isLinkOf, Layer)),
+        is_restriction(R1, only(dul:isComponentOf, Layer)),
         subclass_of(Label, R1),
         is_restriction(R2),
         instance_of(AN, shop:'ArticleNumber'),
@@ -124,7 +158,9 @@ test('check all the restrictions') :-
         is_restriction(R2, value(shop:articleNumberOfLabel, AN)),
         subclass_of(Label, R2)
         ]),
-    tell([ is_physical_object(LabelIns),
+    tell([is_class(Layer1),
+        subclass_of(Layer1, shop:'ShelfLayer'), 
+        is_physical_object(LabelIns),
         instance_of(LabelIns, shop:'ShelfLabel'),
         is_physical_object(FObj),
         is_physical_object(FObj1),
@@ -132,11 +168,13 @@ test('check all the restrictions') :-
         has_type(FObj1, shop:'ProductFacingStanding'),
         triple(FObj, shop:labelOfFacing, LabelIns),
         triple(FObj1, shop:labelOfFacing, LabelIns),
-        instance_of(LayerIns, Layer),
+        instance_of(LayerIns, Layer1),
         triple(LayerIns, soma:hasPhysicalComponent, LabelIns),
         triple(LabelIns, shop:articleNumberOfLabel, AN)
         ]),
-    get_violated_restrictions(LabelIns, Label, Temp, Rest).       
+    
+    gtrace,
+    get_violated_restrictions(Label, LabelIns, Rest).       
 
     %% To check if 
     %% - Problem in the planogram represe to define the restriction I go from bottom 
