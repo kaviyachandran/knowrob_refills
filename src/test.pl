@@ -92,6 +92,21 @@ test('cardinality cons') :-
         gtrace,
         plowl_individual:owl_satisfied_by(LabelFacingRest, LabelIns, [QS,_{}]->FS).
 
+assert_label_rel(LabelIns) :-
+    triple(F, shop:labeOfFacing, LabelIns),
+    tell(triple(LabelIns, shop:facingAssociatedWithLabel, F)),
+    assert_label_rel(LabelIns),
+    fail.
+
+assert_label_rel(LabelIns).
+
+get_violated_restrictions(LabelC, LabelIns) :-
+    triple(LayerIns, soma:hasPhysicalComponent, LabelIns),
+    has_type(LabelIns, shop:'ShelfLabel'),
+    tell(triple(LabelIns, soma:isLinkOf, LayerIns)),
+    assert_label_rel(LabelIns),
+
+
 test('check all the restrictions') :-
     tell([is_class(Layer),
         subclass_of(Layer, shop:'ShelfLayer'),
@@ -102,7 +117,12 @@ test('check all the restrictions') :-
         subclass_of(Label, LabelFacingRest),
         is_restriction(R1),
         is_restriction(R1, only(soma:isLinkOf, Layer)),
-        subclass_of(Label, R1)
+        subclass_of(Label, R1),
+        is_restriction(R2),
+        instance_of(AN, shop:'ArticleNumber'),
+        triple(AN, shop:gtin, 6789),
+        is_restriction(R2, value(shop:articleNumberOfLabel, AN)),
+        subclass_of(Label, R2)
         ]),
     tell([ is_physical_object(LabelIns),
         instance_of(LabelIns, shop:'ShelfLabel'),
@@ -111,15 +131,19 @@ test('check all the restrictions') :-
         has_type(FObj, shop:'ProductFacingStanding'),
         has_type(FObj1, shop:'ProductFacingStanding'),
         triple(FObj, shop:labelOfFacing, LabelIns),
-        triple(FObj1, shop:labelOfFacing, LabelIns)
+        triple(FObj1, shop:labelOfFacing, LabelIns),
+        instance_of(LayerIns, Layer),
+        triple(LayerIns, soma:hasPhysicalComponent, LabelIns),
+        triple(LabelIns, shop:articleNumberOfLabel, AN)
         ]),
+    get_violated_restrictions(LabelIns, Label, Temp, Rest).       
 
     %% To check if 
     %% - Problem in the planogram represe to define the restriction I go from bottom 
     %% to top like e.g: label to layer.
     %% layer to shelf. But in realogram, it goes from top to bottom like layer to label,
     %% shelf to layer.
-    
 
+    
 
 :- end_tests(test).
