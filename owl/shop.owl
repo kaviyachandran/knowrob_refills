@@ -252,6 +252,15 @@
     
 
 
+    <!-- http://knowrob.org/kb/shop.owl#facingAssociatedWithLabel -->
+
+    <owl:ObjectProperty rdf:about="http://knowrob.org/kb/shop.owl#facingAssociatedWithLabel">
+        <rdfs:subPropertyOf rdf:resource="http://knowrob.org/kb/shop.owl#productFacingRelation"/>
+        <owl:inverseOf rdf:resource="http://knowrob.org/kb/shop.owl#labelOfFacing"/>
+    </owl:ObjectProperty>
+    
+
+
     <!-- http://knowrob.org/kb/shop.owl#labelOfFacing -->
 
     <owl:ObjectProperty rdf:about="http://knowrob.org/kb/shop.owl#labelOfFacing">
@@ -1693,6 +1702,14 @@
     
 
 
+    <!-- http://knowrob.org/kb/shop.owl#ShelfId2 -->
+
+    <owl:Class rdf:about="http://knowrob.org/kb/shop.owl#ShelfId2">
+        <rdfs:subClassOf rdf:resource="http://knowrob.org/kb/shop.owl#Shelf"/>
+    </owl:Class>
+    
+
+
     <!-- http://knowrob.org/kb/shop.owl#ShelfLabel -->
 
     <owl:Class rdf:about="http://knowrob.org/kb/shop.owl#ShelfLabel">
@@ -2111,6 +2128,20 @@
 
     <owl:Class rdf:about="http://knowrob.org/kb/shop.owl#Shop1">
         <rdfs:subClassOf rdf:resource="http://knowrob.org/kb/shop.owl#Shop"/>
+        <rdfs:subClassOf>
+            <owl:Class>
+                <owl:intersectionOf rdf:parseType="Collection">
+                    <owl:Restriction>
+                        <owl:onProperty rdf:resource="http://www.ontologydesignpatterns.org/ont/dul/DUL.owl#hasComponent"/>
+                        <owl:allValuesFrom rdf:resource="http://knowrob.org/kb/shop.owl#ShelfId1"/>
+                    </owl:Restriction>
+                    <owl:Restriction>
+                        <owl:onProperty rdf:resource="http://www.ontologydesignpatterns.org/ont/dul/DUL.owl#hasComponent"/>
+                        <owl:allValuesFrom rdf:resource="http://knowrob.org/kb/shop.owl#ShelfId2"/>
+                    </owl:Restriction>
+                </owl:intersectionOf>
+            </owl:Class>
+        </rdfs:subClassOf>
         <rdfs:subClassOf>
             <owl:Restriction>
                 <owl:onProperty rdf:resource="http://knowrob.org/kb/shop.owl#hasShopId"/>
