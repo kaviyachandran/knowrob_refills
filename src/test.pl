@@ -111,25 +111,33 @@ compare_component_value_(Class, Instance, Property) :-
 
 check_label_value_violation(value(Property, Value), Instane) :-
     holds(Instane, Property, Value1),
-    is_article_value_equal(Value, Value1).
+    is_article_value_equal_(Value, Value1).
 
-collect_restrictions(LabelC, LabelIns, Temp, Rest) :-
+collect_restrictions([X | R], LabelIns, Temp, Rest) :-
      % checks
-    subclass_of(LabelC, Restriction),
-    is_restriction(Restriction),
-    \+ member(Restriction, Temp),
-    ((is_value_restriction(Restriction),
-    has_description(Restriction, Desc),
-    check_label_value_violation(Desc, LabelIns),
-    Temp1 = [Restriction | Temp]);
-    (current_scope(QS),
-    \+ plowl_individual:owl_satisfied_by(Restriction, LabelIns, [QS,_{}]->FS) -> 
-    Temp1 = [Restriction  | Temp]; Temp1 = [])),
-    collect_restrictions(LabelC, LabelIns, Temp1, Rest).
+    % \+ member(Restriction, Temp),
+    (\+ owl_restriction_satisfied_by_(X, LabelIns),
+    Temp1 = [X  | Temp]; Temp1 = Temp),
+    collect_restrictions(R, LabelIns, Temp1, Rest).
 
-collect_restrictions(LabelC, LabelIns, Temp, Temp).
+collect_restrictions([], LabelIns, Temp, Temp).
+
+get_all_rest(LabelC, Rest) :-
+    findall(R, 
+        (subclass_of(LabelC, R),
+        is_restriction(R)),
+    Rest).
 
 collect_restrictions(_, _, [], []) :- print_message(info, 'No violations').
+
+owl_restriction_satisfied_by_(X, Instance) :-
+    is_value_restriction(X),
+    has_description(X, Desc),
+    check_label_value_violation(Desc, LabelIns).
+
+owl_restriction_satisfied_by_(X, Instance) :-
+    current_scope(QS),
+    \+ plowl_individual:owl_satisfied_by(X, LabelIns, [QS,_{}]->FS).
 
 get_violated_restrictions(LabelC, LabelIns, Rest) :-
     % Assert due to propertz discrepancies
@@ -137,7 +145,8 @@ get_violated_restrictions(LabelC, LabelIns, Rest) :-
     has_type(LabelIns, shop:'ShelfLabel'),
     tell(triple(LabelIns, dul:isComponentOf, LayerIns)),
     assert_label_rel(LabelIns),
-    collect_restrictions(LabelC, LabelIns, [], Rest).
+    get_all_rest(LabelC, AllRest),
+    collect_restrictions(AllRest, LabelIns, [], Rest).
 
 
 
@@ -174,7 +183,8 @@ test('check all the restrictions') :-
         ]),
     
     gtrace,
-    get_violated_restrictions(Label, LabelIns, Rest).       
+    get_violated_restrictions(Label, LabelIns, Rest),
+    writeln(Rest).       
 
     %% To check if 
     %% - Problem in the planogram represe to define the restriction I go from bottom 
