@@ -40,7 +40,7 @@
     get_number_of_items_in_facing(r, -),
     get_pose_in_desired_reference_frame(r,r, -,-),
     get_model_path(r, -),
-    get_product_location(r, -,-,-,-),
+    get_product_location(r, -,-,-,-, -,-),
     get_product_id_in_facing(r, -)
     ]).
 
