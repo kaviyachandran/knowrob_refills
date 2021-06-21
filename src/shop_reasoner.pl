@@ -107,8 +107,8 @@ get_dimensions(Object, Depth, Width, Height) :-
 % @param Quantity - Number of items in the facing
 %
 get_number_of_items_in_facing(Facing, Quantity) :-
-    triple(F, shop:layerOfFacing, Layer),
-    aggregate_all(count, triple(F, 'http://knowrob.org/kb/shop.owl#productInFacing',_) , Quantity).
+    triple(Facing, shop:layerOfFacing, _),
+    aggregate_all(count, triple(Facing, 'http://knowrob.org/kb/shop.owl#productInFacing',_) , Quantity).
 
 %% get_pose_in_desired_reference_frame(?Object, ?FrameName, ?Translation, ?Rotation)
 %
@@ -122,7 +122,7 @@ get_number_of_items_in_facing(Facing, Quantity) :-
 get_pose_in_desired_reference_frame(Object, FrameName, Translation, Rotation) :-
     is_at(Object, [FrameName, Translation, Rotation]).
 
-get_pose_in_desired_reference_frame(Object, FrameName, Translation, Rotation) :-
+get_pose_in_desired_reference_frame(_, _, _, _) :-
     print_message(warning, 'Pass an appropriate reference frame. The error could also be due to the object having no pose asserted').
 
 %% get_model_path(?Object, ?Path)
@@ -142,13 +142,14 @@ get_model_path(Object, Path) :-
 % Gives the location of the item of the given product type. Product type can be Cereal, CareProduct.
 % Location of the item is given in terms of shelf, shelf layer and facing
 %
-get_product_location(ProductType, Item, Shelf, ShelfLayer, Facing) :-
+get_product_location(ProductType, Item, Shelf, ShelfLayer, Facing, Translation, Rotation) :-
     WorldFrame = 'map',
     subclass_of(Product, ProductType), 
     has_type(Item, Product), 
     triple(Facing ,shop:productInFacing, Item),
-    triple(Facing, shop:layerOfFacing, Layer),
-    triple(Shelf, soma:hasPhysicalComponent, Layer).
+    triple(Facing, shop:layerOfFacing, ShelfLayer),
+    triple(Shelf, soma:hasPhysicalComponent, ShelfLayer),
+    get_pose_in_desired_reference_frame(Item, WorldFrame, Translation, Rotation).
 
 get_product_dimension(ProductName, Depth, Width, Height) :-
     product_dimensions(ProductName, [Depth, Width, Height]).
