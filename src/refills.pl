@@ -94,7 +94,7 @@ shelf_bottom_floor_type_(FrameType,Type) :-
   rdf_equal(Type,dmshop:'DMBFloorT6W100'),!.
 shelf_bottom_floor_type_(FrameType,Type) :-
   transitive(subclass_of(FrameType,dmshop:'DMShelfT6')),
-  subclass_of(Frame,dmshop:'DMShelfW120'),
+  subclass_of(_,dmshop:'DMShelfW120'),
   rdf_equal(Type,dmshop:'DMBFloorT6W120'),!.
 shelf_bottom_floor_type_(FrameType,Type) :-
   transitive(subclass_of(FrameType,dmshop:'DMShelfT7')),
@@ -186,7 +186,7 @@ refills_make_shelf(Frame, [(Pos,bars(Bars),labels(Labels))|Rest]) :-
   forall(member(BarPos,Bars),
          belief_shelf_part_at(Layer,'http://knowrob.org/kb/dm-market.owl#DMShelfMountingBar',norm(BarPos),_, [insert])),
   forall(member((LabelPos,AN),Labels),
-         belief_shelf_barcode_at(Layer,'http://knowrob.org/kb/dm-market.owl#DMShelfLabel', dan(DAN),norm(LabelPos),_, [insert])),
+         belief_shelf_barcode_at(Layer,'http://knowrob.org/kb/dm-market.owl#DMShelfLabel', dan(AN),norm(LabelPos),_, [insert])),
   refills_make_shelf(Frame, Rest).
 
 refills_make_shelf(Frame, [(Pos,Separators,Labels)|Rest]) :-
