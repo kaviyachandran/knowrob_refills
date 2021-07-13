@@ -1390,6 +1390,14 @@
     
 
 
+    <!-- http://knowrob.org/kb/shop.owl#ShelfBack -->
+
+    <owl:Class rdf:about="http://knowrob.org/kb/shop.owl#ShelfBack">
+        <rdfs:subClassOf rdf:resource="http://knowrob.org/kb/shop.owl#ShelfPart"/>
+    </owl:Class>
+    
+
+
     <!-- http://knowrob.org/kb/shop.owl#ShelfBarPerception -->
 
     <owl:Class rdf:about="http://knowrob.org/kb/shop.owl#ShelfBarPerception">
@@ -1415,6 +1423,14 @@
     
 
 
+    <!-- http://knowrob.org/kb/shop.owl#ShelfBase -->
+
+    <owl:Class rdf:about="http://knowrob.org/kb/shop.owl#ShelfBase">
+        <rdfs:subClassOf rdf:resource="http://knowrob.org/kb/shop.owl#ShelfPart"/>
+    </owl:Class>
+    
+
+
     <!-- http://knowrob.org/kb/shop.owl#ShelfConnection -->
 
     <owl:Class rdf:about="http://knowrob.org/kb/shop.owl#ShelfConnection">
@@ -1427,6 +1443,18 @@
 
     <owl:Class rdf:about="http://knowrob.org/kb/shop.owl#ShelfFrame">
         <rdfs:subClassOf rdf:resource="http://knowrob.org/kb/shop.owl#ShelfPart"/>
+        <rdfs:subClassOf>
+            <owl:Restriction>
+                <owl:onProperty rdf:resource="http://www.ease-crc.org/ont/SOMA.owl#hasPhysicalComponent"/>
+                <owl:allValuesFrom rdf:resource="http://knowrob.org/kb/shop.owl#ShelfBack"/>
+            </owl:Restriction>
+        </rdfs:subClassOf>
+        <rdfs:subClassOf>
+            <owl:Restriction>
+                <owl:onProperty rdf:resource="http://www.ease-crc.org/ont/SOMA.owl#hasPhysicalComponent"/>
+                <owl:allValuesFrom rdf:resource="http://knowrob.org/kb/shop.owl#ShelfBase"/>
+            </owl:Restriction>
+        </rdfs:subClassOf>
         <rdfs:subClassOf>
             <owl:Restriction>
                 <owl:onProperty rdf:resource="http://www.ease-crc.org/ont/SOMA.owl#hasPhysicalComponent"/>
