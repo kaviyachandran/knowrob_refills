@@ -13,10 +13,7 @@
      xmlns:urdf="http://knowrob.org/kb/urdf.owl#"
      xmlns:srdl2="http://knowrob.org/kb/srdl2.owl#"
      xmlns:knowrob="http://knowrob.org/kb/knowrob.owl#"
-     xmlns:owl2xml="http://www.w3.org/2006/12/owl2-xml#"
-     xmlns:qudt-unit="http://qudt.org/vocab/unit#"
-     xmlns:srdl2-cap="http://knowrob.org/kb/srdl2-cap.owl#"
-     xmlns:srdl2-comp="http://knowrob.org/kb/srdl2-comp.owl#">
+     xmlns:owl2xml="http://www.w3.org/2006/12/owl2-xml#">
     <owl:Ontology rdf:about="http://knowrob.org/kb/fridge.owl">
         <owl:imports rdf:resource="package://knowrob/owl/srdl2.owl"/>
         <owl:imports rdf:resource="package://knowrob_refills/owl/shop.owl"/>
@@ -152,8 +149,8 @@
         <rdf:type rdf:resource="http://knowrob.org/kb/shop.owl#ShelfFrame"/>
         <dul:hasComponent rdf:resource="http://knowrob.org/kb/fridge.owl#ShelfBack_0"/>
         <dul:hasComponent rdf:resource="http://knowrob.org/kb/fridge.owl#ShelfBase_0"/>
-        <dul:hasComponent rdf:resource="http://knowrob.org/kb/fridge.owl#ShelfLevel_0"/>
-        <dul:hasComponent rdf:resource="http://knowrob.org/kb/fridge.owl#ShelfLevel_1"/>
+<!--         <dul:hasComponent rdf:resource="http://knowrob.org/kb/fridge.owl#ShelfLevel_0"/>
+        <dul:hasComponent rdf:resource="http://knowrob.org/kb/fridge.owl#ShelfLevel_1"/> -->
         <shop:erpShelfId rdf:datatype="http://www.w3.org/2001/XMLSchema#positiveInteger">1</shop:erpShelfId>
     </owl:NamedIndividual>
     
@@ -185,8 +182,8 @@
 
     <owl:NamedIndividual rdf:about="http://knowrob.org/kb/fridge.owl#SmartFridge_0">
         <rdf:type rdf:resource="http://knowrob.org/kb/shop.owl#SmartFridge"/>
-        <dul:hasComponent rdf:resource="http://knowrob.org/kb/fridge.owl#ShelfBack_0"/>
-        <dul:hasComponent rdf:resource="http://knowrob.org/kb/fridge.owl#ShelfBase_0"/>
+        <dul:hasComponent rdf:resource="http://knowrob.org/kb/fridge.owl#ShelfFrame_0"/>
+        <!-- <dul:hasComponent rdf:resource="http://knowrob.org/kb/fridge.owl#ShelfBase_0"/> -->
         <dul:hasComponent rdf:resource="http://knowrob.org/kb/fridge.owl#ShelfLevel_0"/>
         <dul:hasComponent rdf:resource="http://knowrob.org/kb/fridge.owl#ShelfLevel_1"/>
     </owl:NamedIndividual>
